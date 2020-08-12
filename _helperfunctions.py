@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import uniform
 import _languagedicts as ld
+import re
 
 
 def daterange(date1, date2):
@@ -50,6 +51,12 @@ def get_reminder_time(reminder_type, reminder_id):
     to_time = (datetime.min + to_timedelta).time()
     return to_time
 
+
+def string_formatting(input_string):
+    rx = r"\.(?=\S)"
+    s = input_string
+    result = re.sub(rx, ". ", s)
+    return result
 
 def convert_to_string(mylist):
     mylist = [str(i) for i in mylist]

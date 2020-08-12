@@ -30,15 +30,14 @@ class CreateSchedulerJob:
         self.create_job()
 
     def create_job(self):
-        # self.date_for_scheduler = datetime.now() + timedelta(seconds=5)
+        #self.date_for_scheduler = datetime.now() + timedelta(seconds=5)
         scheduler.add_job(execute_scheduler_job_notification, trigger="date", run_date=self.date_for_scheduler,
                           args=self.arguments, kwargs=self.karguments, id=self.scheduler_id, replace_existing=True)
 
 
-def execute_scheduler_job_notification(scheduler_event, client_id, scheduler_id=None, **kwargs):
+def execute_scheduler_job_notification(scheduler_event, client_id, scheduler_id=1, **kwargs):
     import _events as ev
     import uuid
-    print(kwargs)
     sql_statement = (
         f"SELECT active FROM task WHERE activity_id = (SELECT activity_id from activity where user_id = '{client_id}' "
         f"and type_id = {kwargs['activity_type']} and goal_id = (SELECT s.goal_id from goal s where CURRENT_TIMESTAMP between s.start_date and s.end_date "

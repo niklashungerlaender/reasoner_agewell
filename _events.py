@@ -8,15 +8,6 @@ import _schedule
 from _mqttconnection import publish_message
 import _languagedicts as ld
 
-#todo: include space check after dot
-"""
-import re
-rx = r"\.(?=\S)"
-s = "Text1. Text2.Text3."
-result = re.sub(rx, ". ", s)
-print(result)
-# => "Text1. Text2. Text3."
-"""
 
 def execute_scheduler_job(scheduler_event, client_id, scheduler_id=None, **kwargs):
     notification_id = uuid.uuid1().int
@@ -32,11 +23,11 @@ with ruleset('notification/response'):
     @when_all(+m.client_id)
     def post_to_ruleset(c):
         print("Response is here")
-        print(c.m.questionnaire_answers)
         post(c.m.notification_name,
              {"sid": int(c.m.notification_id), "button_type": c.m.button_type,
               "questionnaire_answers": c.m.questionnaire_answers["ANSWERS"], "client_id": c.m.client_id,
               "language_code": c.m.language_code})
+
 
 # ruleset which is triggered internally from preference/message when client_id is not yet present.
 # triggers scheduler job for ruleset firstgoal/intern
@@ -370,7 +361,6 @@ with ruleset('dimension/request'):
                              dashboard_content}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
                              USING (purpose) ORDER  BY t.ord""")
             content = db.DbQuery(sql_statement, "query_all").create_thread()
-            # todo: query weekly mets
             sql_statement = (f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
                              f"and user_id = '{c.m.client_id}'")
             weekly_goal_mets = db.DbQuery(sql_statement, "query_one").create_thread()
@@ -606,10 +596,9 @@ with flowchart("goal"):
                     content_2 = query_content[3][0].format(increase_decrease, increase_decrease_mets, new_goal)
                     print(content_2)
 
-                """sql_statement_goal = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
-                                      f"('{c.m.client_id}','{date.today()}','{run_time}', {new_goal})")"""
-                # print(sql_statement_goal)
-                # db.DbQuery(sql_statement_goal, "insert").create_thread()
+                sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
+                                      f"('{c.m.client_id}','{date.today()}','{run_time}', {new_goal})")
+                db.DbQuery(sql_statement, "insert").create_thread()
                 s.new_goal_mets = new_goal
                 content = content_1 + content_2
                 button_left = hf.create_buttons_dict(button_type="edit", content="edit",
@@ -692,7 +681,7 @@ with flowchart("goal"):
                 print(e)
 
 with ruleset('notification/morning'):
-    @when_all(+m.client_id)
+    @when_all(+m.scheduler_id)
     def get_activity_name(c):
         try:
             s.client_id = c.m.client_id
@@ -791,11 +780,11 @@ with ruleset('notification/morning'):
             title = query_content[1][0]
             activity_name_message = query_content[2][0].format(s.activity_name, s.kwargs["duration"])
             print(activity_name_message, s.content_msg, met_message)
-            content = activity_name_message + s.content_msg[1] + met_message
+            content = activity_name_message + s.content_msg + met_message
 
             button_left = hf.create_buttons_dict(button_type="cancel", content="ignore", language_code=s.language_code)
             button_right = hf.create_buttons_dict(button_type="ok", content="thanks", language_code=s.language_code)
-            buttons = [button_left, button_right]
+            buttons = [button_right, button_left]
             topic = f"eu/agewell/event/reasoner/notification/message"
             notification_name = "notification/morning"
             message_dict = jd.create_notification_message(topic=topic, client_id=s.client_id, notification_id=s.sid,
@@ -816,13 +805,13 @@ with ruleset('notification/morning'):
             feedback = 2
 
         sql_statement = (f"UPDATE notification SET rating = {feedback} "
-                         f"WHERE notification_id = {c.m.sid}")
+                         f"WHERE notification_id = '{c.m.sid}'")
         db.DbQuery(sql_statement, "insert").create_thread()
         c.delete_state()
 
 with flowchart('notification/evening'):
     with stage("input"):
-        to('first_message').when_all(+m.client_id)
+        to('first_message').when_all(+m.scheduler_id)
 
     with stage('first_message'):
         @run
