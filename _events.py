@@ -107,10 +107,10 @@ with ruleset('preference/message'):
                     f"'{c.m.client_id}'")
                 db.DbQuery(sql_statement, "insert").create_thread()
                 try:
-                    sql_statement = (f"UPDATE user_info SET age = {c.m.preferences['yearOfBirth']},"
-                                     f" nickname = '{c.m.preferences['name']}', "
+                    sql_statement = (f"UPDATE user_info SET age = {c.m.preferences['userYearOfBirth']}, "
+                                     f"nickname = '{c.m.preferences['userName']}', "
                                      f"morning_reminder_id = '{c.m.preferences['reminderTimeIndex']}', "
-                                     f"evening_reminder_id = '{c.m.preferences['questionnairTimeIndex']}' "
+                                     f"evening_reminder_id = '{c.m.preferences['questionnaireTimeIndex']}' "
                                      f"WHERE user_id = '{c.m.client_id}'")
                     db.DbQuery(sql_statement, "insert").create_thread()
                 except:
