@@ -54,3 +54,4 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                  "strength": dict(en="Strength training", de="Krafttraining", it="Allenamento della forza",
                                   nl="Krachttraining")
                  }
+and_name = dict(en="and", de="und", it="e", nl="en")
