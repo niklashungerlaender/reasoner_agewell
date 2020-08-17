@@ -2,9 +2,12 @@ import paho.mqtt.client as mqtt
 import json
 import re
 import _helperfunctions as hf
+from configparser import ConfigParser
 
-mqtt_login = {"client": "agewell-client-01", "password": "tolossem2899", "host": "dm.agewell-project.eu",
-              "port": 8883}
+
+
+#mqtt_login = {"client": "agewell-client-01", "password": "tolossem2899", "host": "dm.agewell-project.eu",
+#              "port": 8883}
 
 
 def on_connect(client, userdata, flags, rc):
@@ -52,13 +55,13 @@ def parse_topic(message):
     return topic
 
 
-def connect_to_mqtt(username, password):
+def connect_to_mqtt(username, password, host, port):
     client_conn = mqtt.Client()
     client_conn.tls_set_context(context=None)
     client_conn.username_pw_set(username=username, password=password)
     client_conn.on_connect = on_connect
     client_conn.on_message = on_message
-    client_conn.connect(mqtt_login["host"], mqtt_login["port"])
+    client_conn.connect(host, port)
     return client_conn
 
 
@@ -71,5 +74,3 @@ def publish_message(client_id, topic, message):
     except Exception as e:
         print(e, "publish")
 
-
-client_connection = connect_to_mqtt(mqtt_login["client"], mqtt_login["password"])

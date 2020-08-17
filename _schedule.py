@@ -3,10 +3,14 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from datetime import datetime, date, timedelta
 import _databasefunctions as db
 import _helperfunctions as hf
+from configparser import ConfigParser
 
+config_object = ConfigParser()
+config_object.read("config.ini")
+scheduler_login = config_object["Scheduler"]
 jobstores = {
-    'default': SQLAlchemyJobStore(url='postgresql+psycopg2://postgres:vcare@localhost:5433/AgeWell',
-                                  tablename='apscheduler_jobs')
+    'default': SQLAlchemyJobStore(url=scheduler_login["url"],
+                                  tablename=scheduler_login["tablename"])
 }
 scheduler = BackgroundScheduler(jobstores=jobstores)
 
