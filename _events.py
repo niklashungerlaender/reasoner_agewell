@@ -316,9 +316,9 @@ with ruleset('user/activities/message'):
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration)).morning_notification()
-                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_evening,
+                    """_schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
-                                                 activity_type=c.m.activity_id, task_id=task_id).evening_notification()
+                                                 activity_type=c.m.activity_id, task_id=task_id).evening_notification()"""
             except IndexError:
                 pass
             if len(dates_for_tasks) > 1:
@@ -704,6 +704,7 @@ with ruleset('notification/morning'):
                              f"activity where user_id = '{s.client_id}') and start_daytime < CURRENT_TIMESTAMP "
                              f"ORDER BY start_daytime DESC LIMIT 1")
             last_session_value = db.DbQuery(sql_statement, "query_one").create_thread()
+            print (last_session_value)
             c.post({"last_session": last_session_value})
         except Exception as e:
             print(e)
@@ -719,12 +720,12 @@ with ruleset('notification/morning'):
         c.post({"value_session": "ib"})
 
 
-    @when_all(m.last_session == "hard")
+    @when_all(m.last_session == "dislike")
     def get_value_session(c):
         c.post({"value_session": "db"})
 
 
-    @when_all(m.last_session == "moderate")
+    @when_all(m.last_session == "like")
     def get_value_session(c):
         c.post({"value_session": "mb"})
 
