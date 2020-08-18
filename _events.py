@@ -504,7 +504,7 @@ with ruleset('user/activities/request'):
             activity_list = []
             for h, i in enumerate(activity_infos):
                 goalinfo_days = goalinfo_text[0][0].format(i["activity_name"].capitalize(),
-                                                           ' ' + ld.and_name[c.m.language_code] + ' '.join(i["days"]),
+                                                           (' ' + ld.and_name[c.m.language_code] + ' ').join(i["days"]),
                                                            i["activity_duration"])
                 goalinfo_info = goalinfo_text[1][0].format(i["activity_duration"] * i["met_value"] * len(i["days"]))
                 if i["activities_done"] == count(i["days"]):
