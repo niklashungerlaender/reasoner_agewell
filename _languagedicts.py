@@ -55,3 +55,9 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                                   nl="Krachttraining")
                  }
 and_name = dict(en="and", de="und", it="e", nl="en")
+
+content_title = {"bullet point": dict(en="Tip", de="Tipp", it="Mancia", nl="Tip"),
+                 "description": dict(en="Description", de="Beschreibung", it="Descrizione", nl="Omschrijving"),
+                 "advantage": dict(en="Advantage", de="Vorteil", it="Vantaggio", nl="Voordeel"),
+                 "warning": dict(en="Warning", de="Warnung", it="Avvertimento", nl="Waarschuwing"),
+                 "contraindication": dict(en="Warning", de="Kontraindikation", it="Controindicazione", nl="Contra-indicatie")}

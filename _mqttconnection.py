@@ -74,3 +74,7 @@ def publish_message(client_id, topic, message):
     except Exception as e:
         print(e, "publish")
 
+config_object = ConfigParser()
+config_object.read("config.ini")
+mqtt_login = config_object["MQTT"]
+client_connection = connect_to_mqtt(mqtt_login["user"], mqtt_login["password"], mqtt_login["host"], int(mqtt_login["port"]))

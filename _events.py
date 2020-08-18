@@ -7,6 +7,7 @@ import uuid
 import _schedule
 from _mqttconnection import publish_message
 import _languagedicts as ld
+from random import randint
 
 
 def execute_scheduler_job(scheduler_event, client_id, scheduler_id=None, **kwargs):
@@ -184,9 +185,9 @@ with ruleset('activitytypes/request'):
     def get_activity_types(c):
         try:
             sql_statement = (f"SELECT max(m.type_id) as type_id, m.activity_name, max(m.duration) as duration, "
-                             f"ARRAY_AGG(s.content{c.m.language_code}) as content, ARRAY_AGG (category) "
-                             f"as category, max(m.url) from activity_type m, template s WHERE m.activity_name = s.activity "
-                             f"and m.type_id NOT IN (SELECT b.type_id from activity b WHERE b.user_id = "
+                             f"ARRAY_AGG(s.content{c.m.language_code}) as content, max(m.url) from activity_type m, "
+                             f"template s WHERE m.activity_name = s.activity "
+                             f"and s.category='description' and m.type_id NOT IN (SELECT b.type_id from activity b WHERE b.user_id = "
                              f"'{c.m.client_id}' and b.activity_id in (SELECT s.activity_id FROM task s WHERE "
                              f"s.active = 'True') and b.goal_id = (SELECT b.goal_id from goal b "
                              f"WHERE CURRENT_TIMESTAMP between b.start_date and b.end_date and "
@@ -316,9 +317,9 @@ with ruleset('user/activities/message'):
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration)).morning_notification()
-                    """_schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_evening,
+                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
-                                                 activity_type=c.m.activity_id, task_id=task_id).evening_notification()"""
+                                                 activity_type=c.m.activity_id, task_id=task_id).evening_notification()
             except IndexError:
                 pass
             if len(dates_for_tasks) > 1:
@@ -499,6 +500,7 @@ with ruleset('user/activities/request'):
                     f"FROM template WHERE activity IN {activities} GROUP BY activity ")
 
                 activity_content = db.DbQuery(sql_statement, "query_all").create_thread()
+                print (activity_content)
             activity_list = []
             for h, i in enumerate(activity_infos):
                 goalinfo_days = goalinfo_text[0][0].format(i["activity_name"].capitalize(),
@@ -514,13 +516,12 @@ with ruleset('user/activities/request'):
                         i["activity_duration"] * i["met_value"] * i["activities_done"])
 
                 goal_text += goalinfo_days + goalinfo_info + goalinfo_extra
-
+                random_content = randint(0, len(activity_content[h][2])-1)
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
                                      "CREDIT_DONE": i["activity_duration"] * i["met_value"] * i["activities_done"],
-                                     "CONTENT_DISPLAY": (
-                                         " ".join(': '.join(w) for w in
-                                                  zip(activity_content[h][2], activity_content[h][1]))),
+                                     "CONTENT_DISPLAY": (': '.join((ld.content_title[activity_content[h][2][random_content]][c.m.language_code],
+                                                    activity_content[h][1][randint(0,random_content)]))),
                                      "CONTENT_IMAGE": i["url"]}
                 # todo push it to function to choose bullet point automatically
                 activity_list.append(dict_for_activity)

@@ -3,15 +3,15 @@ from random import randint
 import _languagedicts as ld
 import _helperfunctions as hf
 
-
-def get_content(i, pos_t, pos_c):
+"""
+def get_content(i, pos_t, pos_c, language):
     res = defaultdict(list)
     for title, content in zip(i[pos_t], i[pos_c]):
-        res[title].append(content)
+        res[ld.content_title[title][language]].append(content)
     rest = "".join(
         str(key.capitalize()) + ": " + str(value[randint(0, len(value) - 1)] + " ") for key, value in res.items())
     return rest
-
+"""
 
 def create_notification_message(topic="", client_id="", notification_id=1,
                                 title="", content="", questions=[],
@@ -67,7 +67,7 @@ def create_activity_types_message(topic="", client_id="", types="",
     try:
         types_list = [
             {"ID": i[0], "TITLE_DISPLAY": ld.activity_name[i[1]][language], "DAYS": days, "DURATION": i[2],
-             "CONTENT_DISPLAY": hf.string_formatting(get_content(i, 4, 3)), "CONTENT_IMAGE": i[5]}
+             "CONTENT_DISPLAY": i[3], "CONTENT_IMAGE": i[4]}
             for i in types
         ]
         nd = {"topic": topic, "properties": {}}

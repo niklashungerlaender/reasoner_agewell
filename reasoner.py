@@ -1,7 +1,7 @@
 import logging
 import _databasefunctions as db
 import _schedule
-from _mqttconnection import connect_to_mqtt
+from _mqttconnection import client_connection
 from configparser import ConfigParser
 
 
@@ -12,7 +12,7 @@ def main():
     mqtt_login = config_object["MQTT"]
     db.connect_to_db(database_login["user"], database_login["password"], database_login["host"],
                      database_login["port"], database_login["database"])
-    client = connect_to_mqtt(mqtt_login["user"], mqtt_login["password"], mqtt_login["host"], int(mqtt_login["port"]))
+    client = client_connection
     logging.basicConfig()
     logging.getLogger('apscheduler').setLevel(logging.DEBUG)
     _schedule.scheduler.start()
