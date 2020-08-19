@@ -101,6 +101,7 @@ def create_useractivity_notification(topic="", client_id="", goal_credits="",
     nd = {"topic": topic, "properties": {}}
     nd["properties"]["CLIENT_ID"] = client_id
     nd["properties"]["DIMENSION_ID"] = 1
+    nd["properties"]["TITLE_DISPLAY "] = "Credits: " + str(goal_credits)
     nd["properties"]["GOAL_CREDITS"] = goal_credits
     nd["properties"]["CONTENT_DISPLAY"] = hf.string_formatting(goal_content_display)
     nd["properties"]["CONTENT_IMAGE"] = "https://proself.org/storage/images/ait/goal.jpg"
