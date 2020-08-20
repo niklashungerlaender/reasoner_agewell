@@ -705,13 +705,14 @@ with ruleset('notification/morning'):
                              f"activity where user_id = '{s.client_id}') and start_daytime < CURRENT_TIMESTAMP "
                              f"ORDER BY start_daytime DESC LIMIT 1")
             last_session_value = db.DbQuery(sql_statement, "query_one").create_thread()
-            print (last_session_value)
+            if last_session_value is None:
+                last_session_value = "nan"
             c.post({"last_session": last_session_value})
         except Exception as e:
             print(e)
 
 
-    @when_all(m.last_session == None)
+    @when_all(m.last_session == "nan")
     def get_value_session(c):
         c.post({"value_session": "dq"})
 
