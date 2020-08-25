@@ -9,7 +9,6 @@ def main():
     config_object = ConfigParser()
     config_object.read("config.ini")
     database_login = config_object["Postgres"]
-    mqtt_login = config_object["MQTT"]
     db.connect_to_db(database_login["user"], database_login["password"], database_login["host"],
                      database_login["port"], database_login["database"])
     client = client_connection

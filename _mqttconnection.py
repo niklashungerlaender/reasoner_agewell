@@ -5,11 +5,6 @@ import _helperfunctions as hf
 from configparser import ConfigParser
 
 
-
-#mqtt_login = {"client": "agewell-client-01", "password": "tolossem2899", "host": "dm.agewell-project.eu",
-#              "port": 8883}
-
-
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
 
@@ -73,6 +68,7 @@ def publish_message(client_id, topic, message):
         client_connection.publish(topic, message)
     except Exception as e:
         print(e, "publish")
+
 
 config_object = ConfigParser()
 config_object.read("config.ini")
