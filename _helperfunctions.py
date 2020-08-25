@@ -12,7 +12,7 @@ def daterange(date1, date2):
 def next_weekday(weekday):
     d = datetime.now()
     days_ahead = weekday - d.weekday()
-    if days_ahead < 0:
+    if days_ahead <= 0:
         days_ahead += 7
     datetime_new = d + timedelta(days_ahead)
     return datetime_new.date()
