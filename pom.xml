@@ -30,7 +30,7 @@
 		<assembly.group>reasoner</assembly.group>
 
 		<!-- Server related information -->
-		<deploy.server.host>dm.agewell.at</deploy.server.host>
+		<deploy.server.host>dm.agewell-project.eu</deploy.server.host>
 		<deploy.server.port>22</deploy.server.port>
 		<deploy.server.dir>/tmp</deploy.server.dir>
 	</properties>
@@ -187,12 +187,27 @@
 								<data>
 									<type>directory</type>
 									<src>${assembly.distributiondir.path}</src>
+									<excludes>.*.ini</excludes>
+									<conffile>false</conffile>
 									<mapper>
 										<type>perm</type>
 										<prefix>${assembly.installationdir}</prefix>
-										<user>loader</user>
-										<group>loader</group>
-										<filemode>755</filemode>
+										<user>${assembly.user}</user>
+										<group>${assembly.group}</group>
+										<filemode>750</filemode>
+									</mapper>
+								</data>
+								<data>
+									<type>directory</type>
+									<src>${assembly.distributiondir.path}</src>
+									<includes>*.ini</includes>
+									<conffile>true</conffile>
+									<mapper>
+										<type>perm</type>
+										<prefix>${assembly.installationdir}</prefix>
+										<user>${assembly.user}</user>
+										<group>${assembly.group}</group>
+										<filemode>750</filemode>
 									</mapper>
 								</data>
 							</dataSet>
