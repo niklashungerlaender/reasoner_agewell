@@ -134,6 +134,7 @@
 										<include>**/*.py</include>
 										<include>**/*.ini</include>
 										<include>**/*.csv</include>
+										<include>**/*.txt</include>
 									</includes>
 									<excludes>
 										<include>.idea/**</include>

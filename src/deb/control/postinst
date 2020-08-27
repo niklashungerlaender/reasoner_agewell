@@ -133,6 +133,14 @@ fi
 
 #/////////////////////////
 
+# Installing the Python requirements
+
+echo "Installing the Python requirements from '${assembly.installationdir}/requirements.txt'"
+
+pip3 install --no-cache-dir -r ${assembly.installationdir}/requirements.txt
+
+#/////////////////////////
+
 # Register as a service
 
 echo "Registering service '${assembly.name}'"
