@@ -58,7 +58,7 @@ with ruleset('firstgoal/intern'):
         try:
             notification_id = str(uuid.uuid1().int)
             run_time = datetime.now() + timedelta(days=7)
-            run_time = run_time.replace(hour=23, minute=59)
+            run_time = run_time.replace(hour=23, minute=59, second=00)
             sql_statement_goal = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
                                   f"('{c.m.client_id}','{date.today()}','{run_time}', {1000})")
             db.DbQuery(sql_statement_goal, "insert").create_thread()
@@ -525,6 +525,7 @@ with ruleset('user/activities/request'):
                                      "CONTENT_IMAGE": i["url"]}
                 # todo push it to function to choose bullet point automatically
                 activity_list.append(dict_for_activity)
+         #todo rulset for title (allocate reamining credits or x/x credits done)
             topic = "eu/agewell/event/reasoner/user/activities/response"
             message_dict = jd.create_useractivity_notification(topic=topic, client_id=c.m.client_id,
                                                                goal_credits=weekly_goal_mets,
@@ -548,7 +549,7 @@ with flowchart("goal"):
             try:
                 s.client_id = c.m.client_id
                 run_time = datetime.now() + timedelta(days=7)
-                run_time = run_time.replace(hour=23, minute=59)
+                run_time = run_time.replace(hour=23, minute=59, second=00)
                 _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
                 sql_statement = (f"SELECT goal_id, met_required from goal where user_id = '{c.m.client_id}' "
