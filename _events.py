@@ -523,7 +523,6 @@ with ruleset('user/activities/request'):
                                      "CONTENT_DISPLAY": (': '.join((ld.content_title[activity_content[h][2][random_content]][c.m.language_code],
                                                     activity_content[h][1][randint(0,random_content)]))),
                                      "CONTENT_IMAGE": i["url"]}
-                # todo push it to function to choose bullet point automatically
                 activity_list.append(dict_for_activity)
          #todo rulset for title (allocate reamining credits or x/x credits done)
             topic = "eu/agewell/event/reasoner/user/activities/response"
@@ -1176,6 +1175,7 @@ with flowchart('ipaq/questionnaire'):
                 value = (s.vigorous_answers[0] - 1) * (s.vigorous_answers[1] * 10) * 8 + (s.moderate_answers[0] - 1) * (
                         s.moderate_answers[1] * 10) * \
                         4 + (s.walking_answers[0] - 1) * (s.walking_answers[1] * 10) * 3.3
+                value = round(value, -2)
                 sql_statement = (f"UPDATE user_info SET value_ipaq = {value} WHERE "
                                  f"user_id='{s.client_id}'")
                 db.DbQuery(sql_statement, "insert").create_thread()
