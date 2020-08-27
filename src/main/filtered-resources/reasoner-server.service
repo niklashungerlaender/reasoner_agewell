@@ -1,0 +1,21 @@
+#
+# This script is an Unix systemd script
+#
+[Unit]
+Description=${assembly.name}
+After=syslog.target
+
+[Service]
+Type=simple
+User=${assembly.user}
+Group=${assembly.group}
+WorkingDirectory=${assembly.installationdir}
+ExecStart=/usr/bin/python3 -u ${assembly.installationdir}/reasoner.py
+SyslogIdentifier=${assembly.name}
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

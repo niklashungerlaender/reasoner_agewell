@@ -1,0 +1,27 @@
+<settings xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+	http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+	<servers>
+		<server>
+			<id>at.ac.ait.hbs.common</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>at.ac.ait.hbs.common.snapshots</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>at.ac.ait.hbs.dhh</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>at.ac.ait.hbs.dhh.snapshots</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+	</servers>
+</settings>

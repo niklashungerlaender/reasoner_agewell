@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#/////////////////////////
+
+SD="$(dirname "$(readlink -e "$0")")"
+WD="`pwd`"
+SCRIPT="$(basename $0)"
+SCRIPT_NAME=${SCRIPT%.*}
+SCRIPT_EXTENSION=${SCRIPT##*.}
+SELF=$SD/$SCRIPT
+
+#/////////////////////////
+
+set -e
+
+#/////////////////////////
+
+MODE=$1
+
+if [[ "$MODE" == "install" ]] ; then
+	echo "Installing package"
+fi
+if [[ "$MODE" == "upgrade" ]] ; then
+	echo "Upgrading package"
+fi
+if [[ "$MODE" == "remove" ]] ; then
+	echo "Removing package"
+fi
+if [[ "$MODE" == "configure" ]] ; then
+	echo "Configuring package"
+fi
+
+#/////////////////////////
+
+# Create directories
+
+if [ ! -d "${assembly.installationdir}/" ]; then
+	echo "Creating directory..."
+	mkdir -p ${assembly.installationdir}/
+fi
+
+#/////////////////////////
