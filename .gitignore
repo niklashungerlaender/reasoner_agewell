@@ -101,3 +101,6 @@ hs_err_pid*
 
 # Other
 archive-tmp/
+
+# Python
+**/__pycache__
