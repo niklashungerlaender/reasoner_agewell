@@ -73,10 +73,8 @@ service_exists() {
 user_exists() {
 	local u=$1
 	if id -u "$u" >/dev/null 2>&1; then
-		echo "user exists"
 		return 0
 	else
-		echo "user does not exist"
 		return 1
 	fi
 }

@@ -55,10 +55,3 @@ else
 fi
 
 #/////////////////////////
-
-if [ -d "${assembly.installationdir}/" ]; then
-	echo "Deleting files ('${assembly.installationdir}')..."
-	rm -f -R ${assembly.installationdir}/
-fi
-
-#/////////////////////////
