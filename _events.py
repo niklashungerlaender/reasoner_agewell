@@ -1175,6 +1175,7 @@ with flowchart('ipaq/questionnaire'):
                 value = (s.vigorous_answers[0] - 1) * (s.vigorous_answers[1] * 10) * 8 + (s.moderate_answers[0] - 1) * (
                         s.moderate_answers[1] * 10) * \
                         4 + (s.walking_answers[0] - 1) * (s.walking_answers[1] * 10) * 3.3
+                value = round(value, -2)
                 sql_statement = (f"UPDATE user_info SET value_ipaq = {value} WHERE "
                                  f"user_id='{s.client_id}'")
                 db.DbQuery(sql_statement, "insert").create_thread()

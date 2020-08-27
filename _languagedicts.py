@@ -61,3 +61,5 @@ content_title = {"bullet point": dict(en="Tip", de="Tipp", it="Mancia", nl="Tip"
                  "advantage": dict(en="Advantage", de="Vorteil", it="Vantaggio", nl="Voordeel"),
                  "warning": dict(en="Warning", de="Warnung", it="Avvertimento", nl="Waarschuwing"),
                  "contraindication": dict(en="Warning", de="Kontraindikation", it="Controindicazione", nl="Contra-indicatie")}
+
+weekly_credits = dict(en="Credits for this week: ", de="Credits für diese Woche: ", it="Crediti per questa settimana: ", nl="Credits voor deze week: ")
