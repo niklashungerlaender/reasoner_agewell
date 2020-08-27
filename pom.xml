@@ -28,6 +28,11 @@
 		<assembly.installationdir>/var/python/${assembly.name}</assembly.installationdir>
 		<assembly.user>reasoner</assembly.user>
 		<assembly.group>reasoner</assembly.group>
+
+		<!-- Server related information -->
+		<deploy.server.host>dm.agewell.at</deploy.server.host>
+		<deploy.server.port>22</deploy.server.port>
+		<deploy.server.dir>/tmp</deploy.server.dir>
 	</properties>
 
 	<scm>
