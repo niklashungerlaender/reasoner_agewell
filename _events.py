@@ -298,7 +298,7 @@ with ruleset('user/activities/message'):
                 for day in c.m.selected_days:
                     day = int(day)
                     date_for_scheduler = hf.next_weekday(day)
-                    date_for_task = datetime.strftime(hf.next_weekday(day), "%d/%m/%Y")
+                    date_for_task = datetime.strftime(hf.next_weekday(day), '%Y-%m-%d')
                     dates_for_tasks.append(date_for_task)
                     sql_statement = (f"INSERT INTO task(activity_id, duration, start_daytime, active) SELECT "
                                      f"(SELECT activity_id from activity where user_id = '{c.m.client_id}' and "
