@@ -7,10 +7,16 @@ from configparser import ConfigParser
 
 config_object = ConfigParser()
 config_object.read("config.ini")
-scheduler_login = config_object["Scheduler"]
+scheduler_login = config_object["Postgres"]
+scheduler_table = config_object["Scheduler"]
 jobstores = {
-    'default': SQLAlchemyJobStore(url=scheduler_login["url"],
-                                  tablename=scheduler_login["tablename"])
+    'default': SQLAlchemyJobStore(url="postgresql+psycopg2://" +
+                                      scheduler_login["user"] + ":" +
+                                      scheduler_login["password"] + "@" +
+                                      scheduler_login["host"] + ":" +
+                                      scheduler_login["port"] + "/" +
+                                      scheduler_login["database"],
+                                  tablename=scheduler_table["tablename"])
 }
 scheduler = BackgroundScheduler(jobstores=jobstores)
 
