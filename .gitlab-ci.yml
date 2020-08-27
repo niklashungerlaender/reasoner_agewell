@@ -1,0 +1,56 @@
+image: maven:3-jdk-8
+
+before_script:
+    - chmod +x mvnw
+
+stages:
+    - build
+    - deploy
+    - deploy-server
+
+variables:
+    MAVEN_CLI_OPTS: "-e -U --settings .gitlab-ci-maven.xml --batch-mode -Dmaven.repo.local=.m2/repository -DmavenUserArcsmed=$CI_MAVEN_USER_ARCSMED -DmavenPasswordArcsmed=$CI_MAVEN_PASS_ARCSMED"
+
+build:
+    stage: build
+    script:
+        - echo $CI_BUILD_NAME
+        - echo $CI_BUILD_REF_NAME
+        - echo $CI_BUILD_STAGE
+        - ./mvnw $MAVEN_CLI_OPTS install
+    cache:
+        key: "$CI_COMMIT_REF_NAME"
+        paths:
+            - .m2/repository/
+
+deploy:
+    stage: deploy
+    only:
+        - master
+    script:
+        - echo $CI_BUILD_NAME
+        - echo $CI_BUILD_REF_NAME
+        - echo $CI_BUILD_STAGE
+        - ./mvnw $MAVEN_CLI_OPTS deploy -Pdeploy
+    cache:
+        key: "$CI_COMMIT_REF_NAME"
+        policy: pull
+        paths:
+            - .m2/repository/
+
+deploy-server:
+    stage: deploy-server
+    only:
+        - master
+    script:
+        - echo $CI_BUILD_NAME
+        - echo $CI_BUILD_REF_NAME
+        - echo $CI_BUILD_STAGE
+        - echo $CI_DEPLOY_SERVER_HOST
+        - ./mvnw $MAVEN_CLI_OPTS install -Pserver-deploy -Ddeploy.server.host=$CI_DEPLOY_SERVER_HOST -Ddeploy.server.user=$CI_DEPLOY_SERVER_USER -Ddeploy.server.pass=$CI_DEPLOY_SERVER_PASS
+    cache:
+        key: "$CI_COMMIT_REF_NAME"
+        policy: pull
+        paths:
+            - .m2/repository/
+    when: manual

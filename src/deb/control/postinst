@@ -1,0 +1,166 @@
+#!/bin/bash
+
+#/////////////////////////
+
+SD="$(dirname "$(readlink -e "$0")")"
+WD="`pwd`"
+SCRIPT="$(basename $0)"
+SCRIPT_NAME=${SCRIPT%.*}
+SCRIPT_EXTENSION=${SCRIPT##*.}
+SELF=$SD/$SCRIPT
+
+#/////////////////////////
+
+set -e
+
+#/////////////////////////
+
+MODE=$1
+
+if [[ "$MODE" == "install" ]] ; then
+	echo "Installing package"
+fi
+if [[ "$MODE" == "upgrade" ]] ; then
+	echo "Upgrading package"
+fi
+if [[ "$MODE" == "remove" ]] ; then
+	echo "Removing package"
+fi
+if [[ "$MODE" == "configure" ]] ; then
+	echo "Configuring package"
+fi
+
+#/////////////////////////
+
+ROOT_USER=$(whoami)
+if [[ -n "$SUDO_USER" ]] ; then
+	CURRENT_USER=$SUDO_USER
+else
+	CURRENT_USER=$ROOT_USER
+fi
+
+#/////////////////////////
+
+APP_GREP="$(which grep)"
+
+APP_DOS2UNIX="$(which dos2unix)"
+
+#/////////////////////////
+
+if [ ! -e "$APP_GREP" ] ; then
+	echo "The binary 'grep' doesn't seem to exist!"
+	exit
+fi
+
+#/////////////////////////
+
+if [[ ! -e "$APP_DOS2UNIX" ]] ; then
+	echo "The binary 'dos2unix' doesn't seem to exist!"
+	exit
+fi
+
+#/////////////////////////
+
+service_exists() {
+	local n=$1
+	if [[ $(systemctl list-units --all -t service --full --no-legend "$n.service" | cut -f1 -d' ') == $n.service ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+user_exists() {
+	local u=$1
+	if id -u "$u" >/dev/null 2>&1; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+#/////////////////////////
+
+REASONER_USER="${assembly.user}"
+REASONER_GROUP="${assembly.group}"
+
+#/////////////////////////
+
+if [[ -n "$REASONER_USER" ]] ; then
+	# Check if user exists
+	if user_exists $REASONER_USER; then
+		echo "User '$REASONER_USER' found"
+	else
+		echo "User '$REASONER_USER' not found"
+		useradd -M -r --shell /bin/false $REASONER_USER
+	fi
+else
+	echo "User not configured!"
+	exit
+fi
+
+if [[ -n "$REASONER_GROUP" ]] ; then
+	# Check if group exists
+	if $($APP_GREP --quiet "$REASONER_GROUP:" /etc/group) ; then
+		# Check if the users is added to the group already
+		if ! $($APP_GREP --quiet -Ei "$REASONER_GROUP:(.*)$REASONER_USER" /etc/group) ; then
+			echo "Adding user '$REASONER_USER' to group '$REASONER_GROUP'"
+			usermod -a -G $REASONER_GROUP $REASONER_USER
+			echo "Log-Out and Log-In or Reboot the system for the changes to be applied!"
+		else
+			echo "User '$REASONER_USER' already in group '$REASONER_GROUP'"
+		fi
+	else
+		echo "Group '$REASONER_GROUP' does not exist. Cannot add user '$REASONER_USER' to this group."
+	fi
+else
+	echo "Group not configured!"
+	exit
+fi
+
+#/////////////////////////
+
+# Configure rights
+
+echo "Setting permissions for user '$REASONER_USER'"
+chown -R $REASONER_USER:$REASONER_GROUP ${assembly.installationdir}
+
+#/////////////////////////
+
+if [ -e "$APP_DOS2UNIX" ] ; then
+	find ${assembly.installationdir}/ -type f -exec $APP_DOS2UNIX -q {} \;
+fi
+
+#/////////////////////////
+
+# Installing the Python requirements
+
+echo "Installing the Python requirements from '${assembly.installationdir}/requirements.txt'"
+
+pip3 install --no-cache-dir -r ${assembly.installationdir}/requirements.txt
+
+#/////////////////////////
+
+# Register as a service
+
+echo "Registering service '${assembly.name}'"
+
+systemctl enable ${assembly.installationdir}/${assembly.name}.service
+systemctl start ${assembly.name}
+
+#/////////////////////////
+
+echo "----------------------------------------"
+echo "| NOTE                                 |"
+echo "----------------------------------------"
+echo "Don't forget to configure the database"
+echo "connection when installing the first time:"
+echo ""
+echo ">> nano ${assembly.installationdir}/config.ini"
+echo ""
+echo "And initialize the database:"
+echo ""
+echo ">> python3 ${assembly.installationdir}/fill_database.py"
+echo "----------------------------------------"
+
+#/////////////////////////

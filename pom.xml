@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<parent>
+		<groupId>at.ac.ait.hbs.common</groupId>
+		<artifactId>parent</artifactId>
+		<version>1.0.7</version>
+	</parent>
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>at.ac.ait.hbs.dhh</groupId>
+	<artifactId>reasoner</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>Reasoner</name>
+	<description></description>
+	<url></url>
+
+	<properties>
+		<!-- For further configurations have a look at the parent pom configuration -->
+
+		<!-- Path related information -->
+		<assembly.distributiondir.name>assembly</assembly.distributiondir.name>
+		<assembly.distributiondir.path>${project.build.directory}/${assembly.distributiondir.name}</assembly.distributiondir.path>
+		<assembly.name>reasoner-server</assembly.name>
+		<assembly.description>DHH Reasoner</assembly.description>
+		<assembly.installationdir>/var/python/${assembly.name}</assembly.installationdir>
+		<assembly.user>reasoner</assembly.user>
+		<assembly.group>reasoner</assembly.group>
+
+		<!-- Server related information -->
+		<deploy.server.host>dm.agewell-project.eu</deploy.server.host>
+		<deploy.server.port>22</deploy.server.port>
+		<deploy.server.dir>/tmp</deploy.server.dir>
+	</properties>
+
+	<scm>
+		<url>https://gitlab.ait.ac.at/hbs/dhh/reasoner</url>
+		<connection>scm:git:https://gitlab.ait.ac.at/hbs/dhh/reasoner.git</connection>
+		<developerConnection>scm:git:https://gitlab.ait.ac.at/hbs/dhh/reasoner.git</developerConnection>
+		<tag>master</tag>
+	</scm>
+
+	<developers>
+		<developer>
+			<id>roedll</id>
+			<name>Lukas Roedl</name>
+			<email>lukas.roedl@ait.ac.at</email>
+			<roles>
+				<role>Software engineer</role>
+			</roles>
+			<organization>AIT</organization>
+			<organizationUrl>http://www.ait.ac.at</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+
+	<distributionManagement>
+		<repository>
+			<id>at.ac.ait.hbs.dhh</id>
+			<name>AIT - DHH Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh
+			</url>
+			<uniqueVersion>false</uniqueVersion>
+		</repository>
+		<snapshotRepository>
+			<id>at.ac.ait.hbs.dhh.snapshots</id>
+			<name>AIT - DHH Snapshots Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+			</url>
+			<uniqueVersion>false</uniqueVersion>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<dependencies>
+	</dependencies>
+
+	<dependencyManagement>
+		<!-- For further configurations have a look at the parent pom configuration -->
+		<dependencies>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<!-- For further configurations have a look at the parent pom configuration -->
+			<plugins>
+				<plugin>
+					<groupId>org.sonatype.plugins</groupId>
+					<artifactId>nexus-staging-maven-plugin</artifactId>
+					<configuration>
+						<serverId>at.ac.ait.hbs.dhh</serverId>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<outputDirectory>${project.build.directory}</outputDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/main/filtered-resources</directory>
+									<targetPath>${assembly.distributiondir.path}</targetPath>
+									<filtering>true</filtering>
+								</resource>
+								<resource>
+									<directory>${project.basedir}/src/main/resources</directory>
+									<targetPath>${assembly.distributiondir.path}</targetPath>
+									<filtering>false</filtering>
+								</resource>
+								<resource>
+									<directory>${project.basedir}</directory>
+									<targetPath>${assembly.distributiondir.path}</targetPath>
+									<filtering>false</filtering>
+									<includes>
+										<include>**/*.py</include>
+										<include>**/*.ini</include>
+										<include>**/*.csv</include>
+										<include>**/*.txt</include>
+									</includes>
+									<excludes>
+										<include>.idea/**</include>
+										<include>.git/**</include>
+										<include>.mvn/**</include>
+										<exclude>src/**</exclude>
+										<exclude>target/**</exclude>
+									</excludes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-resources-deb</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/deb</directory>
+									<targetPath>${project.build.directory}/deb</targetPath>
+									<filtering>true</filtering>
+									<includes>
+										<include>**/*</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- package phase -->
+			<plugin>
+				<groupId>org.vafer</groupId>
+				<artifactId>jdeb</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jdeb</goal>
+						</goals>
+						<configuration>
+							<verbose>true</verbose>
+							<attach>true</attach>
+							<deb>${project.build.directory}/${project.artifactId}_${project.version}_all.deb</deb>
+							<controlDir>${project.build.directory}/deb/control</controlDir>
+							<dataSet>
+								<!-- Files that go to '${assembly.installationdir}/...' -->
+								<data>
+									<type>directory</type>
+									<src>${assembly.distributiondir.path}</src>
+									<excludes>.*.ini</excludes>
+									<conffile>false</conffile>
+									<mapper>
+										<type>perm</type>
+										<prefix>${assembly.installationdir}</prefix>
+										<user>${assembly.user}</user>
+										<group>${assembly.group}</group>
+										<filemode>750</filemode>
+									</mapper>
+								</data>
+								<data>
+									<type>directory</type>
+									<src>${assembly.distributiondir.path}</src>
+									<includes>*.ini</includes>
+									<conffile>true</conffile>
+									<mapper>
+										<type>perm</type>
+										<prefix>${assembly.installationdir}</prefix>
+										<user>${assembly.user}</user>
+										<group>${assembly.group}</group>
+										<filemode>750</filemode>
+									</mapper>
+								</data>
+							</dataSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<!-- For further configurations have a look at the parent pom configuration -->
+
+		<profile>
+			<id>server-deploy</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>test</id>
+								<phase>package</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target>
+										<taskdef classname="org.apache.tools.ant.taskdefs.optional.ssh.Scp" name="scp" />
+										<echo>Testing with server: ${deploy.server.host}:${deploy.server.port}</echo>
+										<sshexec command="mkdir -p ${deploy.server.dir}" host="${deploy.server.host}" port="${deploy.server.port}" password="${deploy.server.pass}" trust="true" username="${deploy.server.user}"></sshexec>
+										<scp file="${project.build.directory}/${project.artifactId}_${project.version}_all.deb" password="${deploy.server.pass}" port="${deploy.server.port}" todir="${deploy.server.user}@${deploy.server.host}:${deploy.server.dir}" trust="true" verbose="false" />
+									</target>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<repositories>
+		<!-- For further configurations have a look at the parent pom configuration -->
+		<repository>
+			<id>at.ac.ait.hbs.common</id>
+			<name>AIT - Common Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/common
+			</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>at.ac.ait.hbs.common.snapshots</id>
+			<name>AIT - Common Snapshots Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/common-snapshots
+			</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>at.ac.ait.hbs.dhh</id>
+			<name>AIT - DHH Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh
+			</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>at.ac.ait.hbs.dhh.snapshots</id>
+			<name>AIT - DHH Snapshots Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+			</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<!-- For further configurations have a look at the parent pom configuration -->
+		<pluginRepository>
+			<id>at.ac.ait.hbs.common</id>
+			<name>AIT - Common Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/common
+			</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>at.ac.ait.hbs.common.snapshots</id>
+			<name>AIT - Common Snapshots Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/common-snapshots
+			</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>at.ac.ait.hbs.dhh</id>
+			<name>AIT - DHH Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh
+			</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>at.ac.ait.hbs.dhh.snapshots</id>
+			<name>AIT - DHH Snapshots Repository</name>
+			<url>
+				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+			</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+</project>
