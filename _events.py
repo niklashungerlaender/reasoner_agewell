@@ -523,7 +523,6 @@ with ruleset('user/activities/request'):
                                      "CONTENT_DISPLAY": (': '.join((ld.content_title[activity_content[h][2][random_content]][c.m.language_code],
                                                     activity_content[h][1][randint(0,random_content)]))),
                                      "CONTENT_IMAGE": i["url"]}
-                # todo push it to function to choose bullet point automatically
                 activity_list.append(dict_for_activity)
          #todo rulset for title (allocate reamining credits or x/x credits done)
             topic = "eu/agewell/event/reasoner/user/activities/response"
