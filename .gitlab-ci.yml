@@ -47,7 +47,7 @@ deploy-server:
         - echo $CI_BUILD_REF_NAME
         - echo $CI_BUILD_STAGE
         - echo $CI_DEPLOY_SERVER_HOST
-        - ./mvnw $MAVEN_CLI_OPTS install -pl server/assembly -Pserver-deploy -Ddeploy.server.host=$CI_DEPLOY_SERVER_HOST -Ddeploy.server.user=$CI_DEPLOY_SERVER_USER -Ddeploy.server.pass=$CI_DEPLOY_SERVER_PASS
+        - ./mvnw $MAVEN_CLI_OPTS install -Pserver-deploy -Ddeploy.server.host=$CI_DEPLOY_SERVER_HOST -Ddeploy.server.user=$CI_DEPLOY_SERVER_USER -Ddeploy.server.pass=$CI_DEPLOY_SERVER_PASS
     cache:
         key: "$CI_COMMIT_REF_NAME"
         policy: pull

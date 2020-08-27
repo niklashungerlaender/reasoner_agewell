@@ -121,3 +121,18 @@ systemctl enable ${assembly.installationdir}/${assembly.name}.service
 systemctl start ${assembly.name}
 
 #/////////////////////////
+
+echo "----------------------------------------"
+echo "| NOTE                                 |"
+echo "----------------------------------------"
+echo "Don't forget to configure the database"
+echo "connection when installing the first time:"
+echo ""
+echo ">> nano ${assembly.installationdir}/config.ini"
+echo ""
+echo "And initialize the database:"
+echo ""
+echo ">> python3 ${assembly.installationdir}/fill_database.py"
+echo "----------------------------------------"
+
+#/////////////////////////
