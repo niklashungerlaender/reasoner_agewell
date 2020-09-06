@@ -515,6 +515,7 @@ with ruleset('user/activities/request'):
                 print (activity_content)
             activity_list = []
             for h, i in enumerate(activity_infos):
+                i["days"].reverse()
                 goalinfo_days = goalinfo_text[0][0].format(i["activity_name"].capitalize(),
                                                            (' ' + ld.and_name[c.m.language_code] + ' ').join(i["days"]),
                                                            i["activity_duration"])
@@ -536,13 +537,17 @@ with ruleset('user/activities/request'):
                                                     activity_content[h][1][randint(0,random_content)]))),
                                      "CONTENT_IMAGE": i["url"]}
                 activity_list.append(dict_for_activity)
-         #todo rulset for title (allocate reamining credits or x/x credits done)
+            if left_mets > 0:
+                title_display = ld.allocate_credits[c.m.language_code] + str(left_mets)
+            else:
+                title_display=ld.weekly_credits[c.m.language_code] + str(weekly_goal_mets)
             topic = "eu/agewell/event/reasoner/user/activities/response"
             message_dict = jd.create_useractivity_notification(topic=topic, client_id=c.m.client_id,
                                                                goal_credits=weekly_goal_mets,
                                                                goal_content_display=goal_text,
                                                                activities_list=activity_list,
-                                                               language=c.m.language_code)
+                                                               language=c.m.language_code,
+                                                               title_display=title_display)
 
             publish_message(c.m.client_id, topic, message_dict)
         except Exception  as e:
