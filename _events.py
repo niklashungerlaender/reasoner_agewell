@@ -57,8 +57,8 @@ with ruleset('firstgoal/intern'):
     def create_goal_notification(c):
         try:
             notification_id = str(uuid.uuid1().int)
-            run_time = datetime.now() + timedelta(days=7)
-            run_time = run_time.replace(hour=23, minute=59, second=00)
+            run_time = datetime.now() + timedelta(days=6)
+            run_time = run_time.replace(hour=23, minute=59, second=59)
             sql_statement_goal = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
                                   f"('{c.m.client_id}','{date.today()}','{run_time}', {1000})")
             db.DbQuery(sql_statement_goal, "insert").create_thread()
@@ -295,10 +295,22 @@ with ruleset('user/activities/message'):
                 reminder_id_evening = "not_defined"
             try:
                 test_if_emty = c.m.selected_days[0]
+                sql_statement = (f"SELECT s.start_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
+                                 f"CURRENT_TIMESTAMP")
+                start_date = db.DbQuery(sql_statement, "query_one").create_thread()
+                sql_statement = (f"SELECT s.end_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
+                                 f"CURRENT_TIMESTAMP")
+                end_date = db.DbQuery(sql_statement, "query_one").create_thread()
                 for day in c.m.selected_days:
                     day = int(day)
-                    date_for_scheduler = hf.next_weekday(day)
-                    date_for_task = datetime.strftime(hf.next_weekday(day), '%Y-%m-%d')
+                    date_for_task = datetime(1900, 1,1)
+                    for dt in hf.daterange(start_date, end_date):
+                        if dt.weekday() == day:
+                            date_for_task = dt
+                        else:
+                            pass
+                    date_for_scheduler = date_for_task
+                    date_for_task = datetime.strftime(date_for_task, '%Y-%m-%d')
                     dates_for_tasks.append(date_for_task)
                     sql_statement = (f"INSERT INTO task(activity_id, duration, start_daytime, active) SELECT "
                                      f"(SELECT activity_id from activity where user_id = '{c.m.client_id}' and "
@@ -547,15 +559,16 @@ with flowchart("goal"):
         def create_goal_notification(c):
             try:
                 s.client_id = c.m.client_id
-                run_time = datetime.now() + timedelta(days=7)
-                run_time = run_time.replace(hour=23, minute=59, second=00)
+                run_time = datetime.now() + timedelta(days=6)
+                run_time = run_time.replace(hour=23, minute=59, second=59)
                 _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
-                sql_statement = (f"SELECT goal_id, met_required from goal where user_id = '{c.m.client_id}' "
+                sql_statement = (f"SELECT goal_id, met_required, end_date from goal where user_id = '{c.m.client_id}' "
                                  f"ORDER BY goal_id DESC LIMIT 1")
                 goal_vars = db.DbQuery(sql_statement, "query_all").create_thread()
                 goal_id = goal_vars[0][0]
                 goal_mets = goal_vars[0][1]
+                end_date = goal_vars[0][2]
 
                 sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
                                  f"ON s.type_id = activity.type_id JOIN task a ON a.activity_id = "
@@ -598,7 +611,8 @@ with flowchart("goal"):
                     print(content_2)
 
                 sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
-                                      f"('{c.m.client_id}','{date.today()}','{run_time}', {new_goal})")
+                                 f"('{c.m.client_id}','{end_date+timedelta(seconds=1)}' "
+                                 f",'{run_time}', {new_goal})")
                 db.DbQuery(sql_statement, "insert").create_thread()
                 s.new_goal_mets = new_goal
                 content = content_1 + content_2
