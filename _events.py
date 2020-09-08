@@ -456,7 +456,8 @@ with ruleset('user/activities/request'):
             query_content = db.DbQuery(sql_statement, "query_all").create_thread()
             goalinfo_info = query_content[0][0].format(weekly_goal_mets)
             goalinfo_achieved = query_content[1][0].format(allocated_mets)
-
+            if left_mets < 50:
+                left_mets = 0
             if left_mets != 0:
                 goalinfo_remaining = query_content[2][0].format(left_mets)
             else:
