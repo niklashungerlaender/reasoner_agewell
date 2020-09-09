@@ -131,7 +131,7 @@ with ruleset('user/activity/edit/request'):
                                  f"as selected_days, max(s.duration) as selected_duration from activity_type m, task s "
                                  f"WHERE s.active='True' and m.type_id = {int(c.m.activity_id)} and s.activity_id = "
                                  f"(SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
-                                 f"'{c.m.client_id}' and a.goal_id = (SELECT c.goal_id from goal c "
+                                 f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = (SELECT c.goal_id from goal c "
                                  f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
                                  f"c.user_id = '{c.m.client_id}')) GROUP BY m.activity_name")
 
@@ -170,6 +170,7 @@ with ruleset('user/activity/edit/request'):
                     days_activity.append({"ID": datetime.weekday(dt),
                                           "CONTENT_DISPLAY": ld.weekDays[c.m.language_code][datetime.weekday(dt)]})
             days_activity = [i for n, i in enumerate(days_activity) if i not in days_activity[n + 1:]]
+            print (days_activity)
             topic = "eu/agewell/event/reasoner/user/activity/edit/response"
             message_dict = jd.create_activity_types_edit_message(topic=topic, client_id=c.m.client_id,
                                                                  days=days_activity, selected_days=selected_days,
