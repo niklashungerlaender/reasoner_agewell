@@ -517,7 +517,7 @@ with ruleset('user/activities/request'):
                 print (activity_content)
             activity_list = []
             for h, i in enumerate(activity_infos):
-                i["days"].reverse()
+                #i["days"].reverse()
                 goalinfo_days = goalinfo_text[0][0].format(i["activity_name"].capitalize(),
                                                            (' ' + ld.and_name[c.m.language_code] + ' ').join(i["days"]),
                                                            i["activity_duration"])
