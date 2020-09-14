@@ -4,6 +4,7 @@ import _languagedicts as ld
 import re
 
 
+
 def daterange(date1, date2):
     for n in range(int((date2 - date1).days) + 1):
         yield date1 + timedelta(n)
@@ -41,6 +42,13 @@ def create_buttons_dict(button_type="", content="", wait=False, tts="",
                    "TTS_ON_CLICK": tts}
     return button_dict
 
+
+def update_notification_time(list_of_notification_ids, notification_time, reminder_time):
+    import _schedule
+    for i in list_of_notification_ids:
+        _schedule.scheduler.modify_job(job_id=i[0],
+                                       run_date=datetime.combine(i[1],
+                                       get_reminder_time(notification_time, reminder_time)))
 
 def get_reminder_time(reminder_type, reminder_id):
     reminder = {"morning": {"0": [6, 8], "1": [8, 10], "2": [10, 12], "not_defined": [9, 9]},

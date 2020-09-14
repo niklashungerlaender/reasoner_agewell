@@ -49,12 +49,15 @@ def execute_scheduler_job_notification(scheduler_event, client_id, scheduler_id=
     import _events as ev
     import uuid
     sql_statement = (
-        f"SELECT active FROM task WHERE activity_id = (SELECT activity_id from activity where user_id = '{client_id}' "
-        f"and type_id = {kwargs['activity_type']} and goal_id = (SELECT s.goal_id from goal s where CURRENT_TIMESTAMP between s.start_date and s.end_date "
+        f"SELECT active, activity_done FROM task WHERE activity_id = (SELECT activity_id from activity where user_id = '{client_id}' "
+        f"and type_id = {kwargs['activity_type']} and goal_id = (SELECT s.goal_id from goal s where CURRENT_TIMESTAMP "
+        f"between s.start_date and s.end_date "
         f"and user_id = '{client_id}')) and start_daytime = '{date.today()}'")
-    task_active = db.DbQuery(sql_statement, "query_one").create_thread()
-    print(task_active)
-    if task_active:
+    check_task = db.DbQuery(sql_statement, "query_all").create_thread()
+    print (check_task)
+    task_active = check_task[0][0]
+    activity_done = check_task[0][1]
+    if task_active and activity_done is None:
         notification_id = uuid.uuid1().int
         sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
                          f"({notification_id},'{client_id}','{datetime.now()}', 0)")

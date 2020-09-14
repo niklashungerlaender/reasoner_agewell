@@ -62,7 +62,8 @@ with ruleset('firstgoal/intern'):
             sql_statement_goal = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
                                   f"('{c.m.client_id}','{date.today()}','{run_time}', {1000})")
             db.DbQuery(sql_statement_goal, "insert").create_thread()
-            _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time,
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+                                        trigger="date", run_date=run_time,
                                         args=["goal", c.m.client_id])
 
             """for testing:
@@ -114,6 +115,14 @@ with ruleset('preference/message'):
                                      f"evening_reminder_id = '{c.m.preferences['questionnaireTimeIndex']}' "
                                      f"WHERE user_id = '{c.m.client_id}'")
                     db.DbQuery(sql_statement, "insert").create_thread()
+
+                    #update notification time
+                    """
+                    sql_statement = (f" SELECT id, run_time from apscheduler_jobs where id LIKE '{c.m.client_id}' + '%' " 
+                                     f"+ 'morning_notification'")
+                    scheduler_ids = db.DbQuery(sql_statement, "query_all").create_thread()
+                    hf.update_notification_time(scheduler_ids)
+                    """
                 except:
                     pass
             else:
@@ -148,7 +157,8 @@ with ruleset('user/activity/edit/request'):
                                  f"as selected_days, max(s.duration) as selected_duration from activity_type m, task s "
                                  f"WHERE m.type_id = {int(c.m.activity_id)} and s.activity_id = "
                                  f"(SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
-                                 f"'{c.m.client_id}' and a.goal_id = (SELECT c.goal_id from goal c "
+                                 f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = " 
+                                 f"(SELECT c.goal_id from goal c "
                                  f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
                                  f"c.user_id = '{c.m.client_id}')) GROUP BY m.activity_name")
 
@@ -160,6 +170,19 @@ with ruleset('user/activity/edit/request'):
                 selected_days = []
                 # selected_days = hf.convert_to_string(selected_days)
                 selected_duration = ""
+            #deselect day if already activity done
+            sql_statement = (f"SELECT start_daytime from task s WHERE activity_done='True' and "
+                            f"s.activity_id = (SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
+                            f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = " 
+                            f"(SELECT c.goal_id from goal c "
+                            f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
+                            f"c.user_id = '{c.m.client_id}')) ORDER BY start_daytime DESC  LIMIT 1 ")
+            activities_done_days = db.DbQuery(sql_statement, "query_one").create_thread()
+            print (activities_done_days)
+            if activities_done_days is not None:
+                activities_done_days = [datetime.weekday(activities_done_days)]
+            else:
+                activities_done_days = []
             sql_statement = (f"SELECT s.end_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
                              f"CURRENT_TIMESTAMP")
             end_date = db.DbQuery(sql_statement, "query_one").create_thread()
@@ -169,7 +192,7 @@ with ruleset('user/activity/edit/request'):
                 for dt in hf.daterange(start_date, end_date):
                     days_activity.append({"ID": datetime.weekday(dt),
                                           "CONTENT_DISPLAY": ld.weekDays[c.m.language_code][datetime.weekday(dt)]})
-            days_activity = [i for n, i in enumerate(days_activity) if i not in days_activity[n + 1:]]
+            days_activity = [i for n, i in enumerate(days_activity) if i["ID"] not in activities_done_days]
             print (days_activity)
             topic = "eu/agewell/event/reasoner/user/activity/edit/response"
             message_dict = jd.create_activity_types_edit_message(topic=topic, client_id=c.m.client_id,
@@ -426,7 +449,11 @@ with ruleset('user/activities/request'):
     @when_all(m.dimension_id == 1)
     def get_user_activities(c):
         try:
-            # get goal mets and goal info
+            sql_statement = (f"SELECT goal_id from goal WHERE CURRENT_TIMESTAMP between start_date and end_date "
+                             f"and user_id = '{c.m.client_id}'")
+            active_goal = db.DbQuery(sql_statement, "query_one").create_thread()
+            if not active_goal:
+                post("firstgoal/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
             sql_statement = (f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
                              f"and user_id = '{c.m.client_id}'")
             weekly_goal_mets = db.DbQuery(sql_statement, "query_one").create_thread()
@@ -555,6 +582,19 @@ with ruleset('user/activities/request'):
         except Exception  as e:
             print(e)
 
+with ruleset('delete/user'):
+    @when_all(+m.client_id)
+    def get_user_activities(c):
+        sql_statement = f" DELETE from apscheduler_jobs where id LIKE '{c.m.client_id}' + '%'"
+        db.DbQuery(sql_statement, "insert").create_thread()
+        sql_statement = f" DELETE from apscheduler_jobs where id LIKE '%' + '{c.m.client_id}'"
+        db.DbQuery(sql_statement, "insert").create_thread()
+        sql_statement = f" DELETE from user_info where id = '{c.m.client_id}'"
+        db.DbQuery(sql_statement, "insert").create_thread()
+
+
+
+
 with flowchart("goal"):
     # calculate percentage of goal done and adjust the new goal dependent
     # on the credits of the old goal
@@ -566,9 +606,11 @@ with flowchart("goal"):
         def create_goal_notification(c):
             try:
                 s.client_id = c.m.client_id
+                notification_id = str(uuid.uuid1().int)
                 run_time = datetime.now() + timedelta(days=6)
                 run_time = run_time.replace(hour=23, minute=59, second=59)
-                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time,
+                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", id=notification_id + c.m.client_id,
+                                            run_date=run_time,
                                             args=["goal", c.m.client_id])
                 sql_statement = (f"SELECT goal_id, met_required, end_date from goal where user_id = '{c.m.client_id}' "
                                  f"ORDER BY goal_id DESC LIMIT 1")
