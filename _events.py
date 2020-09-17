@@ -118,6 +118,7 @@ with ruleset('preference/message'):
 
                     #update notification time
                     #todo check type of "next_run_time" -> maybe conversion to datetime is needed
+                    """
                     update_notification_time = [(f"SELECT id, next_run_time from apscheduler_jobs where id LIKE "
                                                   f"'{c.m.client_id} + '%' + 'morning_notification'",
                                                   "morning", c.m.preferences['reminderTimeIndex']),
@@ -128,7 +129,7 @@ with ruleset('preference/message'):
                     for i in update_notification_time:
                         scheduler_ids = db.DbQuery(i[0], "query_all").create_thread()
                         hf.update_notification_time(scheduler_ids, i[1], i[2])
-
+                    """
                 except:
                     pass
             else:
