@@ -117,12 +117,18 @@ with ruleset('preference/message'):
                     db.DbQuery(sql_statement, "insert").create_thread()
 
                     #update notification time
-                    """
-                    sql_statement = (f" SELECT id, run_time from apscheduler_jobs where id LIKE '{c.m.client_id}' + '%' " 
-                                     f"+ 'morning_notification'")
-                    scheduler_ids = db.DbQuery(sql_statement, "query_all").create_thread()
-                    hf.update_notification_time(scheduler_ids)
-                    """
+                    #todo check type of "next_run_time" -> maybe conversion to datetime is needed
+                    update_notification_time = [(f"SELECT id, next_run_time from apscheduler_jobs where id LIKE "
+                                                  f"'{c.m.client_id} + '%' + 'morning_notification'",
+                                                  "morning", c.m.preferences['reminderTimeIndex']),
+                                                 (f"SELECT id, next_run_time from apscheduler_jobs where id LIKE " 
+                                                  f"'{c.m.client_id}' + '%' + 'evening_notification'",
+                                                  "evening", c.m.preferences['questionnaireTimeIndex'])]
+
+                    for i in update_notification_time:
+                        scheduler_ids = db.DbQuery(i[0], "query_all").create_thread()
+                        hf.update_notification_time(scheduler_ids, i[1], i[2])
+
                 except:
                     pass
             else:
@@ -298,7 +304,7 @@ with ruleset('creditsinformation/request'):
 
 # inserts the chosen activity into the database and sets deselected choices to inactive
 with ruleset('user/activities/message'):
-    @when_all(+m.client_id)
+    @when_all(m.dimension_id == 1)
     def insert_user_activity(c):
         try:
             sql_statement = (f"INSERT INTO activity(user_id, goal_id, type_id) SELECT "
