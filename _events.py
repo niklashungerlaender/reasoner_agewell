@@ -8,50 +8,42 @@ import _schedule
 from _mqttconnection import publish_message
 import _languagedicts as ld
 from random import randint
+import _sqlstatements as ss
 
 
+# schedules notifications for weekly goals from ruleset firstgoal/intern and flowchart goal
 def execute_scheduler_job(scheduler_event, client_id, scheduler_id=None, **kwargs):
     notification_id = uuid.uuid1().int
-    sql_statement = f"SELECT language from user_info WHERE user_id = '{client_id}'"
-    language_code = db.DbQuery(sql_statement, "query_one").create_thread()
+    language_code = db.DbQuery(ss.query("get_language", client_id=client_id), "query_one").create_thread()
 
     post(scheduler_event,
          {"sid": notification_id, "client_id": client_id, "scheduler_id": scheduler_id,
           "language_code": language_code, "kwargs": kwargs})
 
 
+# receives button responses from notifications and sends them to ruleset
 with ruleset('notification/response'):
     @when_all(+m.client_id)
     def post_to_ruleset(c):
-        print("Response is here")
         post(c.m.notification_name,
              {"sid": int(c.m.notification_id), "button_type": c.m.button_type,
               "questionnaire_answers": c.m.questionnaire_answers["ANSWERS"], "client_id": c.m.client_id,
               "language_code": c.m.language_code})
 
-
-# ruleset which is triggered internally from preference/message when client_id is not yet present.
+# ruleset which is triggered internally from preference/message when client_id is not yet in database.
 # triggers scheduler job for ruleset firstgoal/intern
-with ruleset('clientid/message'):
+with ruleset('create/clientid/intern'):
     @when_all(+m.client_id)
     def create_user(c):
         try:
-            sql_statement = f"INSERT INTO user_info(user_id) VALUES ('{c.m.client_id}') ON CONFLICT DO NOTHING"
-            db.DbQuery(sql_statement, "insert").create_thread()
-            sql_statement = (
-                f"UPDATE user_info SET language = '{c.m.language_code}' WHERE user_id = "
-                f"'{c.m.client_id}'")
-            db.DbQuery(sql_statement, "insert").create_thread()
-
-            """for testing:
-            run_time = datetime.now() + timedelta(seconds=2)
-            _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time,
-                                        args=["firstgoal/intern", c.m.client_id])"""
-
+            db.DbQuery(ss.query("insert_clientid", client_id=c.m.client_id), "insert").create_thread()
+            db.DbQuery(ss.query("update_language", client_id=c.m.client_id, language_code=c.m.language_code),
+                       "insert").create_thread()
             post("firstgoal/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
         except Exception as e:
             print(e)
 
+# is triggered by ruleset clientid/message
 with ruleset('firstgoal/intern'):
     @when_all(+m.client_id)
     def create_goal_notification(c):
@@ -59,27 +51,14 @@ with ruleset('firstgoal/intern'):
             notification_id = str(uuid.uuid1().int)
             run_time = datetime.now() + timedelta(days=6)
             run_time = run_time.replace(hour=23, minute=59, second=59)
-            sql_statement_goal = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
-                                  f"('{c.m.client_id}','{date.today()}','{run_time}', {1000})")
-            db.DbQuery(sql_statement_goal, "insert").create_thread()
+            db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time), "insert").create_thread()
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
                                         trigger="date", run_date=run_time,
                                         args=["goal", c.m.client_id])
 
-            """for testing:
-            run_time_questionnaires = datetime.now() + timedelta(seconds=5)
-            _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time_questionnaires,
-                                        args=["ipaq/questionnaire", c.m.client_id])
-            _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", run_date=run_time_questionnaires,
-                                        args=["mpam/questionnaire", c.m.client_id])"""
-
-            sql_statement = f"SELECT language FROM user_info WHERE user_id = '{c.m.client_id}'"
-            language_code = db.DbQuery(sql_statement, "query_one").create_thread()
-            sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
-                             """unnest('{first_goal_title, 
-                             first_goal_text}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
-                             USING (purpose) ORDER  BY t.ord""")
-            query_content = db.DbQuery(sql_statement, "query_all").create_thread()
+            language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            query_content = db.DbQuery(ss.query("get_firstgoal_content", language_code=c.m.language_code),
+                                       "query_all").create_thread()
             title = query_content[0][0]
             content = query_content[1][0]
             buttons = [hf.create_buttons_dict(button_type="ok", content="ok", language_code=language_code, wait=True)]
@@ -101,39 +80,29 @@ with ruleset('preference/message'):
     @when_all(+m.client_id)
     def insert_user_preferences(c):
         try:
-            sql_statement = f"SELECT user_id from user_info WHERE user_id = '{c.m.client_id}'"
-            existing = db.DbQuery(sql_statement, "query_one").create_thread()
-            if existing:
-                sql_statement = (
-                    f"UPDATE user_info SET language = '{c.m.language_code}' WHERE user_id = "
-                    f"'{c.m.client_id}'")
-                db.DbQuery(sql_statement, "insert").create_thread()
+            check_user_id = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            if check_user_id:
+
+                db.DbQuery(ss.query("update_user_info", client_id=c.m.client_id, language_code=c.m.language_code,
+                                    age=c.m.preferences['userYearOfBirth'],
+                                    nickname=c.m.preferences['userName'],
+                                    morning_not=c.m.preferences['reminderTimeIndex'],
+                                    evening_not=c.m.preferences['questionnaireTimeIndex']), "insert").create_thread()
                 try:
-                    sql_statement = (f"UPDATE user_info SET age = {c.m.preferences['userYearOfBirth']}, "
-                                     f"nickname = '{c.m.preferences['userName']}', "
-                                     f"morning_reminder_id = '{c.m.preferences['reminderTimeIndex']}', "
-                                     f"evening_reminder_id = '{c.m.preferences['questionnaireTimeIndex']}' "
-                                     f"WHERE user_id = '{c.m.client_id}'")
-                    db.DbQuery(sql_statement, "insert").create_thread()
-
-                    #update notification time
-                    #todo check type of "next_run_time" -> maybe conversion to datetime is needed
-                    """
-                    update_notification_time = [(f"SELECT id, next_run_time from apscheduler_jobs where id LIKE "
-                                                  f"'{c.m.client_id} + '%' + 'morning_notification'",
-                                                  "morning", c.m.preferences['reminderTimeIndex']),
-                                                 (f"SELECT id, next_run_time from apscheduler_jobs where id LIKE " 
-                                                  f"'{c.m.client_id}' + '%' + 'evening_notification'",
-                                                  "evening", c.m.preferences['questionnaireTimeIndex'])]
-
+                    update_notification_time = [(ss.query("update_notification", client_id=c.m.client_id,
+                                                          notification_name="morning_notification"),
+                                                 "morning", c.m.preferences['reminderTimeIndex']),
+                                                (ss.query("update_notification", client_id=c.m.client_id,
+                                                          notification_name="evening_notification"),
+                                                 "evening", c.m.preferences['questionnaireTimeIndex'])]
                     for i in update_notification_time:
                         scheduler_ids = db.DbQuery(i[0], "query_all").create_thread()
                         hf.update_notification_time(scheduler_ids, i[1], i[2])
-                    """
-                except:
-                    pass
+
+                except Exception as e:
+                    print(e)
             else:
-                post("clientid/message", {"client_id": c.m.client_id, "language_code": c.m.language_code})
+                post("create/clientid/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
 
         except Exception as e:
             print(e)
@@ -143,102 +112,73 @@ with ruleset('user/activity/edit/request'):
     def get_activity_types(c):
         try:
             try:
-                sql_statement = (f"SELECT max(m.type_id), max(m.duration) as duration, ARRAY_AGG(s.start_daytime) "
-                                 f"as selected_days, max(s.duration) as selected_duration from activity_type m, task s "
-                                 f"WHERE s.active='True' and m.type_id = {int(c.m.activity_id)} and s.activity_id = "
-                                 f"(SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
-                                 f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = (SELECT c.goal_id from goal c "
-                                 f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
-                                 f"c.user_id = '{c.m.client_id}')) GROUP BY m.activity_name")
-
-                activity_types = db.DbQuery(sql_statement, "query_all").create_thread()
-                print(activity_types)
-                type_id = activity_types[0][0]
-                duration = activity_types[0][1]
-                duration = hf.convert_to_string(duration)
+                activity_types = db.DbQuery(ss.query("get_activity_types_edit", client_id=c.m.client_id,
+                                                     activity_id=c.m.activity_id), "query_all").create_thread()
                 selected_days = [i.weekday() for i in activity_types[0][2]]
-                # selected_days = hf.convert_to_string(selected_days)
                 selected_duration = str(activity_types[0][3])
             except:
-                sql_statement = (f"SELECT max(m.type_id), max(m.duration) as duration, ARRAY_AGG(s.start_daytime) "
-                                 f"as selected_days, max(s.duration) as selected_duration from activity_type m, task s "
-                                 f"WHERE m.type_id = {int(c.m.activity_id)} and s.activity_id = "
-                                 f"(SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
-                                 f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = " 
-                                 f"(SELECT c.goal_id from goal c "
-                                 f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
-                                 f"c.user_id = '{c.m.client_id}')) GROUP BY m.activity_name")
-
-                activity_types = db.DbQuery(sql_statement, "query_all").create_thread()
-                print(activity_types)
-                type_id = activity_types[0][0]
-                duration = activity_types[0][1]
-                duration = hf.convert_to_string(duration)
+                activity_types = db.DbQuery(ss.query("get_activity_types_edit_except", client_id=c.m.client_id,
+                                                     activity_id=c.m.activity_id), "query_all").create_thread()
                 selected_days = []
-                # selected_days = hf.convert_to_string(selected_days)
                 selected_duration = ""
-            #deselect day if already activity done
-            sql_statement = (f"SELECT start_daytime from task s WHERE activity_done='True' and "
-                            f"s.activity_id = (SELECT MAX(a.activity_id) from activity a WHERE a.user_id = "
-                            f"'{c.m.client_id}' and a.type_id = {int(c.m.activity_id)} and a.goal_id = " 
-                            f"(SELECT c.goal_id from goal c "
-                            f"WHERE CURRENT_TIMESTAMP between c.start_date and c.end_date and "
-                            f"c.user_id = '{c.m.client_id}')) ORDER BY start_daytime DESC  LIMIT 1 ")
-            activities_done_days = db.DbQuery(sql_statement, "query_one").create_thread()
-            print (activities_done_days)
-            if activities_done_days is not None:
-                activities_done_days = [datetime.weekday(activities_done_days)]
-            else:
-                activities_done_days = []
-            sql_statement = (f"SELECT s.end_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
-                             f"CURRENT_TIMESTAMP")
-            end_date = db.DbQuery(sql_statement, "query_one").create_thread()
+
+            type_id = activity_types[0][0]
+            duration = activity_types[0][1]
+            duration = hf.convert_to_string(duration)
+            # check if task for today already done
+            activity_done_today = db.DbQuery(ss.query("get_task_done", client_id=c.m.client_id,
+                                                      activity_id=c.m.activity_id), "query_one").create_thread()
+            print(activity_done_today)
+            end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id), "query_one").create_thread()
             start_date = datetime.now()
             days_activity = []
             if end_date is not None:
                 for dt in hf.daterange(start_date, end_date):
                     days_activity.append({"ID": datetime.weekday(dt),
                                           "CONTENT_DISPLAY": ld.weekDays[c.m.language_code][datetime.weekday(dt)]})
-            days_activity = [i for n, i in enumerate(days_activity) if i["ID"] not in activities_done_days]
-            print (days_activity)
+            print(days_activity)
+            # if task for today is done deselect it
+            if activity_done_today is not None:
+                days_activity = [i for n, i in enumerate(days_activity) if
+                                 i["ID"] not in [datetime.weekday(date.today())]]
+            print(days_activity)
+            content_sub_screens = [("activity_days", "", ld.text_to_speech["days_edit"][c.m.language_code]),
+                                   ("activity_duration", "", ld.text_to_speech["duration"][c.m.language_code])]
             topic = "eu/agewell/event/reasoner/user/activity/edit/response"
             message_dict = jd.create_activity_types_edit_message(topic=topic, client_id=c.m.client_id,
                                                                  days=days_activity, selected_days=selected_days,
                                                                  selected_duration=selected_duration,
                                                                  activity_id=type_id,
-                                                                 language=c.m.language_code, duration=duration)
+                                                                 language=c.m.language_code, duration=duration,
+                                                                 content_display_sub_screens=content_sub_screens)
             publish_message(c.m.client_id, topic, message_dict)
         except Exception as e:
             print(e)
+
 # ruleset which returns actìvities which are currently not chosen by the user. Includes time, day and info
 with ruleset('activitytypes/request'):
     @when_all(m.dimension_id == 1)
     def get_activity_types(c):
         try:
-            sql_statement = (f"SELECT max(m.type_id) as type_id, m.activity_name, max(m.duration) as duration, "
-                             f"ARRAY_AGG(s.content{c.m.language_code}) as content, max(m.url) from activity_type m, "
-                             f"template s WHERE m.activity_name = s.activity "
-                             f"and s.category='description' and m.type_id NOT IN (SELECT b.type_id from activity b WHERE b.user_id = "
-                             f"'{c.m.client_id}' and b.activity_id in (SELECT s.activity_id FROM task s WHERE "
-                             f"s.active = 'True') and b.goal_id = (SELECT b.goal_id from goal b "
-                             f"WHERE CURRENT_TIMESTAMP between b.start_date and b.end_date and "
-                             f"b.user_id = '{c.m.client_id}')) GROUP BY activity_name")
-
-            activity_types = db.DbQuery(sql_statement, "query_all").create_thread()
-            sql_statement = (f"SELECT s.end_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
-                             f"CURRENT_TIMESTAMP")
+            activity_types = db.DbQuery(ss.query("get_activity_types", client_id=c.m.client_id,
+                                                 language_code=c.m.language_code), "query_all").create_thread()
             start_date = datetime.now()
-            end_date = db.DbQuery(sql_statement, "query_one").create_thread()
+            end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id), "query_one").create_thread()
             days_activity = []
             if end_date is not None:
                 for dt in hf.daterange(start_date, end_date):
                     days_activity.append({"ID": datetime.weekday(dt),
                                           "CONTENT_DISPLAY": ld.weekDays[c.m.language_code][datetime.weekday(dt)]})
             days_activity = [i for n, i in enumerate(days_activity) if i not in days_activity[n + 1:]]
+            content_sub_screens = [("activity_type", "", ld.text_to_speech["select_activity"][c.m.language_code]),
+                                   ("activity_days", "", ld.text_to_speech["days"][c.m.language_code]),
+                                   ("activity_duration", "", ld.text_to_speech["duration"][c.m.language_code])]
+
             topic = "eu/agewell/event/reasoner/activitytypes/response"
-            message_dict = jd.create_activity_types_message(topic=topic, client_id=c.m.client_id,
-                                                            types=activity_types, days=days_activity,
-                                                            language=c.m.language_code)
+            message_dict = jd.create_activity_types_response(topic=topic, client_id=c.m.client_id,
+                                                             types=activity_types, days=days_activity,
+                                                             language=c.m.language_code,
+                                                             content_display_sub_screens=content_sub_screens)
             publish_message(c.m.client_id, topic, message_dict)
         except Exception as e:
             print(e)
@@ -249,38 +189,25 @@ with ruleset('creditsinformation/request'):
     @when_all(m.dimension_id == 1)
     def insert_user_preferences(c):
         try:
-            sql_statement = f"SELECT met_value from activity_type WHERE type_id = {c.m.activity_id}"
-            met_value = db.DbQuery(sql_statement, "query_one").create_thread()
+            met_value = db.DbQuery(ss.query("get_met_value", activity_id=c.m.activity_id), "query_one").create_thread()
             try:
                 met_calculation = met_value * int(c.m.selected_duration) * len(c.m.selected_days)
             except Exception as e:
                 print(e)
                 met_calculation = 0
-            sql_statement = (
-                f"SELECT content{c.m.language_code} FROM template WHERE purpose = 'credits_information_general'")
-            message_constellation_general = db.DbQuery(sql_statement, "query_one").create_thread()
+            message_constellation_general = db.DbQuery(ss.query("get_content", purpose="credits_information_general",
+                                                                language_code=c.m.language_code),
+                                                       "query_one").create_thread()
             message_constellation_general = message_constellation_general.format(met_calculation)
-
-            sql_statement = (f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
-                             f"and user_id = '{c.m.client_id}'")
-            weekly_goal_mets = db.DbQuery(sql_statement, "query_one").create_thread()
+            weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
+                                          "query_one").create_thread()
             if weekly_goal_mets is None:
                 weekly_goal_mets = 0
-            sql_statement = (f"SELECT b.duration, s.met_value from task b "
-                             f"INNER JOIN activity m ON b.activity_id = m.activity_id "
-                             f"INNER JOIN activity_type s ON s.type_id = m.type_id "
-                             f"WHERE b.active = True and m.activity_id IN "
-                             f" (SELECT m.activity_id from activity m WHERE m.goal_id = "
-                             f"(SELECT b.goal_id from goal b where CURRENT_TIMESTAMP between b.start_date and "
-                             f"b.end_date "
-                             f"and user_id = '{c.m.client_id}') and m.type_id!={c.m.activity_id})")
 
-            active_mets = db.DbQuery(sql_statement, "query_all").create_thread()
-            print(active_mets)
+            active_mets = db.DbQuery(ss.query("get_active_mets", client_id=c.m.client_id,
+                                              activity_id=c.m.activity_id), "query_all").create_thread()
             active_mets = sum(i[0] * i[1] for i in active_mets)
-            print(active_mets)
             left_mets = weekly_goal_mets - (met_calculation + active_mets)
-            print(left_mets)
             if left_mets > 50:
                 scnd_msg = "credits_information_more"
                 mets_msg = left_mets
@@ -290,8 +217,9 @@ with ruleset('creditsinformation/request'):
             else:
                 scnd_msg = "credits_information_stay"
 
-            sql_statement = f"SELECT content{c.m.language_code} FROM template WHERE purpose = '{scnd_msg}'"
-            message_constellation_specific = db.DbQuery(sql_statement, "query_one").create_thread()
+            message_constellation_specific = db.DbQuery(ss.query("get_content",
+                                                                 language_code=c.m.language_code,
+                                                                 purpose=scnd_msg), "query_one").create_thread()
             if scnd_msg != "credits_information_stay":
                 message_constellation_specific = message_constellation_specific.format(mets_msg)
 
@@ -304,37 +232,27 @@ with ruleset('creditsinformation/request'):
             print(e)
 
 # inserts the chosen activity into the database and sets deselected choices to inactive
-with ruleset('user/activities/message'):
+with ruleset('user/activity/message'):
     @when_all(m.dimension_id == 1)
     def insert_user_activity(c):
         try:
-            sql_statement = (f"INSERT INTO activity(user_id, goal_id, type_id) SELECT "
-                             f"'{c.m.client_id}', (SELECT s.goal_id from goal s where CURRENT_TIMESTAMP between "
-                             f"s.start_date and s.end_date "
-                             f"and user_id = '{c.m.client_id}'), {c.m.activity_id} ON CONFLICT DO NOTHING")
-            print(sql_statement)
-            db.DbQuery(sql_statement, "insert").create_thread()
+            db.DbQuery(ss.query("insert_activity", client_id=c.m.client_id, activity_id=c.m.activity_id),
+                       "insert").create_thread()
 
             dates_for_tasks = []
-            sql_statement = f"Select morning_reminder_id from user_info WHERE user_id='{c.m.client_id}'"
-            reminder_id_morning = db.DbQuery(sql_statement, "query_one").create_thread()
-            if reminder_id_morning is None:
-                reminder_id_morning = "not_defined"
-            sql_statement = f"Select evening_reminder_id from user_info WHERE user_id='{c.m.client_id}'"
-            reminder_id_evening = db.DbQuery(sql_statement, "query_one").create_thread()
-            if reminder_id_evening is None:
-                reminder_id_evening = "not_defined"
+            reminder_id_morning = db.DbQuery(ss.query("get_morning_not_id", client_id=c.m.client_id),
+                                             "query_one").create_thread()
+            reminder_id_evening = db.DbQuery(ss.query("get_evening_not_id", client_id=c.m.client_id),
+                                             "query_one").create_thread()
             try:
                 test_if_emty = c.m.selected_days[0]
-                sql_statement = (f"SELECT s.start_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
-                                 f"CURRENT_TIMESTAMP")
-                start_date = db.DbQuery(sql_statement, "query_one").create_thread()
-                sql_statement = (f"SELECT s.end_date from goal s where user_id = '{c.m.client_id}' and s.end_date > "
-                                 f"CURRENT_TIMESTAMP")
-                end_date = db.DbQuery(sql_statement, "query_one").create_thread()
+                start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
+                                        "query_one").create_thread()
+                end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id),
+                                      "query_one").create_thread()
                 for day in c.m.selected_days:
                     day = int(day)
-                    date_for_task = datetime(1900, 1,1)
+                    date_for_task = datetime(1900, 1, 1)
                     for dt in hf.daterange(start_date, end_date):
                         if dt.weekday() == day:
                             date_for_task = dt
@@ -343,55 +261,38 @@ with ruleset('user/activities/message'):
                     date_for_scheduler = date_for_task
                     date_for_task = datetime.strftime(date_for_task, '%Y-%m-%d')
                     dates_for_tasks.append(date_for_task)
-                    sql_statement = (f"INSERT INTO task(activity_id, duration, start_daytime, active) SELECT "
-                                     f"(SELECT activity_id from activity where user_id = '{c.m.client_id}' and "
-                                     f"goal_id = ( "
-                                     f"SELECT s.goal_id from goal s where "
-                                     f"CURRENT_TIMESTAMP between s.start_date and s.end_date and user_id = " 
-                                     f"'{c.m.client_id}') and type_id = {c.m.activity_id}), "
-                                     f"{int(c.m.selected_duration)}, '{date_for_task}', True  ON CONFLICT ON CONSTRAINT "
-                                     f"task_activity_id_start_daytime_key DO UPDATE SET active='True', duration= "
-                                     f"{int(c.m.selected_duration)} RETURNING task_id")
-                    print(sql_statement)
-                    task_id = db.DbQuery(sql_statement, "insert").create_thread()
+                    task_id = db.DbQuery(ss.query("insert_task", client_id=c.m.client_id, activity_id=c.m.activity_id,
+                                                  duration=c.m.selected_duration, date_task=date_for_task),
+                                         "insert").create_thread()
+
                     scheduler_id_morning = c.m.client_id + str(c.m.activity_id) + str(day) + "morning_notification"
                     scheduler_id_evening = c.m.client_id + str(c.m.activity_id) + str(day) + "evening_notification"
-                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_morning,
+
+                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_morning,
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration)).morning_notification()
-                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id_evening,
+
+                    _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
                                                  activity_type=c.m.activity_id, task_id=task_id).evening_notification()
+
             except IndexError:
                 pass
             if len(dates_for_tasks) > 1:
-                sql_statement = (
-                    f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from activity where "
-                    f"user_id = '{c.m.client_id}' "
-                    f"and type_id = {c.m.activity_id} and goal_id = (SELECT s.goal_id from goal s where "
-                    f"CURRENT_TIMESTAMP "
-                    f"between s.start_date and s.end_date "
-                    f"and user_id = '{c.m.client_id}')) and start_daytime NOT IN {tuple(dates_for_tasks)}")
+                to_update = "update_task"
             elif len(dates_for_tasks) == 1:
                 dates_for_tasks = dates_for_tasks[0]
-                sql_statement = (
-                    f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from activity where "
-                    f"user_id = '{c.m.client_id}' "
-                    f"and type_id = {c.m.activity_id} and goal_id = (SELECT s.goal_id from goal s where "
-                    f"CURRENT_TIMESTAMP "
-                    f"between s.start_date and s.end_date "
-                    f"and user_id = '{c.m.client_id}')) and start_daytime NOT IN ('{dates_for_tasks}')")
+                to_update = "update_task_ifone"
             else:
-                sql_statement = (
-                    f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from activity where "
-                    f"user_id = '{c.m.client_id}' "
-                    f"and type_id = {c.m.activity_id} and goal_id = (SELECT s.goal_id from goal s where "
-                    f"CURRENT_TIMESTAMP "
-                    f"between s.start_date and s.end_date "
-                    f"and user_id = '{c.m.client_id}'))")
-            print(sql_statement)
-            db.DbQuery(sql_statement, "insert").create_thread()
+                to_update = "update_task_ifzero"
+            db.DbQuery(ss.query(to_update, client_id=c.m.client_id, activity_id=c.m.activity_id,
+                                date_task=dates_for_tasks), "insert").create_thread()
+            topic = "eu/agewell/event/reasoner/user/activity/response"
+            message_dict = jd.create_useractivity_response(topic=topic, client_id=c.m.client_id,
+                                                           activity_id=c.m.activity_id)
+            print(message_dict)
+            publish_message(c.m.client_id, topic, message_dict)
         except Exception as e:
             print(e)
 
@@ -400,26 +301,17 @@ with ruleset('dimension/request'):
     @when_all(+m.client_id)
     def get_dimension_info(c):
         try:
-            sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
-                             """unnest('{dashboard_title, 
-                             dashboard_content}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
-                             USING (purpose) ORDER  BY t.ord""")
-            content = db.DbQuery(sql_statement, "query_all").create_thread()
-            sql_statement = (f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
-                             f"and user_id = '{c.m.client_id}'")
-            weekly_goal_mets = db.DbQuery(sql_statement, "query_one").create_thread()
+            content = db.DbQuery(ss.query("get_dimension_request_content", language_code=c.m.language_code),
+                                 "query_all").create_thread()
+            weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
+                                          "query_one").create_thread()
             if weekly_goal_mets is None:
                 weekly_goal_mets = 0
-            sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
-                             f"ON s.type_id = activity.type_id JOIN task a ON a.activity_id = "
-                             f"activity.activity_id WHERE a.active='True' and a.activity_done='True'"
-                             f"and a.activity_id IN (SELECT m.activity_id from activity m WHERE m.goal_id = "
-                             f"(SELECT b.goal_id from goal b where CURRENT_TIMESTAMP "
-                             f"between b.start_date and b.end_date  and user_id = '{c.m.client_id}'))")
 
-            done_mets = db.DbQuery(sql_statement, "query_all").create_thread()
-            print(done_mets)
+            done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
             done_mets = sum(i[0] * i[1] for i in done_mets)
+
+
             try:
                 done_mets_percentage = int(done_mets * 100 / weekly_goal_mets)
             except Exception as e:
@@ -434,8 +326,8 @@ with ruleset('dimension/request'):
             else:
                 scnd_msg = "dashboard_content_neu"
 
-            sql_statement = f"Select content{c.m.language_code} FROM template WHERE purpose = '{scnd_msg}'"
-            dashboard_motivation = db.DbQuery(sql_statement, "query_one").create_thread()
+            dashboard_motivation = db.DbQuery(ss.query("get_content", purpose=scnd_msg,
+                                                       language_code=c.m.language_code), "query_one").create_thread()
 
             topic = "eu/agewell/event/reasoner/dimension/response"
             title = content[0][0]
@@ -456,24 +348,24 @@ with ruleset('user/activities/request'):
     @when_all(m.dimension_id == 1)
     def get_user_activities(c):
         try:
-            sql_statement = (f"SELECT goal_id from goal WHERE CURRENT_TIMESTAMP between start_date and end_date "
-                             f"and user_id = '{c.m.client_id}'")
-            active_goal = db.DbQuery(sql_statement, "query_one").create_thread()
+            active_goal = db.DbQuery(ss.query("get_goal_id", client_id=c.m.client_id), "query_one").create_thread()
+
             if not active_goal:
-                post("firstgoal/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
-            sql_statement = (f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
-                             f"and user_id = '{c.m.client_id}'")
-            weekly_goal_mets = db.DbQuery(sql_statement, "query_one").create_thread()
+                notification_id = str(uuid.uuid1().int)
+                run_time = datetime.now() + timedelta(days=6)
+                run_time = run_time.replace(hour=23, minute=59, second=59)
+                db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time),
+                           "insert").create_thread()
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+                                            trigger="date", run_date=run_time,
+                                            args=["goal", c.m.client_id])
+
+            weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
+                                          "query_one").create_thread()
             if weekly_goal_mets == None:
                 weekly_goal_mets = 0
-            sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
-                             f"ON s.type_id = activity.type_id JOIN task a ON a.activity_id = "
-                             f"activity.activity_id WHERE a.active='True' and a.activity_id IN (SELECT m.activity_id "
-                             f"from "
-                             f"activity m WHERE m.goal_id = (SELECT b.goal_id from goal b where CURRENT_TIMESTAMP "
-                             f"between b.start_date and b.end_date  and user_id = '{c.m.client_id}'))")
-            allocated_mets = db.DbQuery(sql_statement, "query_all").create_thread()
-            print(allocated_mets)
+            allocated_mets = db.DbQuery(ss.query("get_selected_mets", client_id=c.m.client_id),
+                                        "query_all").create_thread()
             try:
                 allocated_mets = sum(i[0] * i[1] for i in allocated_mets)
                 if allocated_mets > weekly_goal_mets:
@@ -483,53 +375,47 @@ with ruleset('user/activities/request'):
                 allocated_mets = 0
                 left_mets = weekly_goal_mets
 
-            sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
-                             """unnest('{goalinfo_info, 
-                             goalinfo_achieved, goalinfo_remaining,
-                              goalinfo_activities}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
-                             USING (purpose) ORDER  BY t.ord""")
-            query_content = db.DbQuery(sql_statement, "query_all").create_thread()
-            goalinfo_info = query_content[0][0].format(weekly_goal_mets)
-            goalinfo_achieved = query_content[1][0].format(allocated_mets)
-            if left_mets < 50:
-                left_mets = 0
+            content_goalinfo = db.DbQuery(ss.query("get_goalinfo_content", language_code=c.m.language_code),
+                                          "query_all").create_thread()
+            goalinfo_info = content_goalinfo[0][0].format(weekly_goal_mets)
+            goalinfo_achieved = content_goalinfo[1][0].format(allocated_mets)
             if left_mets != 0:
-                goalinfo_remaining = query_content[2][0].format(left_mets)
+                goalinfo_remaining = content_goalinfo[2][0].format(left_mets)
             else:
                 goalinfo_remaining = ""
 
-            goalinfo_activities = query_content[3][0]
+            goalinfo_activities = content_goalinfo[3][0]
             goalinfo_1 = goalinfo_info + goalinfo_achieved + goalinfo_remaining + goalinfo_activities
 
-            sql_statement = (f"SELECT s.activity_name, ARRAY_AGG(a.start_daytime), max(a.duration) as duration,"
-                             f"count(CASE WHEN a.activity_done THEN 1 END), max(s.met_value) as met_value, "
-                             f"max(s.type_id), max(s.url) from "
-                             f"activity_type s INNER JOIN activity m ON s.type_id = m.type_id "
-                             f"INNER JOIN task a ON a.activity_id = m.activity_id WHERE a.active = 'True' and "
-                             f"m.activity_id IN (SELECT a.activity_id WHERE a.active = 'True') and "
-                             f"m.goal_id = ( "
-                             f"SELECT m.goal_id from goal m where CURRENT_TIMESTAMP between m.start_date "
-                             f"and m.end_date and m.user_id = '{c.m.client_id}') GROUP BY s.activity_name")
+            activity_infos = db.DbQuery(ss.query("get_activity_infos", client_id=c.m.client_id),
+                                        "query_all").create_thread()
 
-            activity_infos = db.DbQuery(sql_statement, "query_all").create_thread()
-
+            try:
+                activity_active_today = db.DbQuery(ss.query("get_activities_active_today", client_id=c.m.client_id),
+                                                   "query_all").create_thread()
+                activity_active_today = [var for tup in activity_active_today for var in tup]
+            except:
+                activity_active_today = []
+            activity_missed = db.DbQuery(ss.query("get_missed_days", client_id=c.m.client_id),
+                                     "query_all").create_thread()
+            activity_missed = [var for tup in activity_missed for var in tup]
             activity_infos = [
                 {"activity_name": ld.activity_name[i[0]][c.m.language_code],
                  "days": [ld.weekDays[c.m.language_code][j.weekday()] for j in i[1]], "activity_duration": i[2],
                  "activities_done": i[3], "met_value": i[4], "type_id": i[5], "url": i[6],
-                 "activity_name_english": i[0]}
+                 "activity_name_english": i[0],
+                 "active_today": True if i[0] in activity_active_today else False,
+                 "text_to_speech": ld.text_to_speech["activity_today"][c.m.language_code]
+                 if i[0] in activity_active_today
+                 else ld.text_to_speech["delete_info"][c.m.language_code] if i[0] in activity_missed
+                 else ld.text_to_speech["activity_info"][c.m.language_code],
+                 "keyword": hf.get_hyphenation(ld.activity_name[i[0]][c.m.language_code], c.m.language_code)}
                 for i in activity_infos
             ]
-
             goal_text = goalinfo_1
-            sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
-                             """unnest('{goalinfo_activity_days, 
-                             goalinfo_activity_info, 
-                             goalinfo_activity_achieved, 
-                             goalinfo_activity_completed}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
-                             USING (purpose) ORDER  BY t.ord""")
 
-            goalinfo_text = db.DbQuery(sql_statement, "query_all").create_thread()
+            goalinfo_text = db.DbQuery(ss.query("get_goalinfo_content_specific", language_code=c.m.language_code),
+                                       "query_all").create_thread()
 
             if len(activity_infos) == 0:
                 activity_content = ""
@@ -548,10 +434,9 @@ with ruleset('user/activities/request'):
                     f"FROM template WHERE activity IN {activities} GROUP BY activity ")
 
                 activity_content = db.DbQuery(sql_statement, "query_all").create_thread()
-                print (activity_content)
             activity_list = []
             for h, i in enumerate(activity_infos):
-                #i["days"].reverse()
+                # i["days"].reverse()
                 goalinfo_days = goalinfo_text[0][0].format(i["activity_name"].capitalize(),
                                                            (' ' + ld.and_name[c.m.language_code] + ' ').join(i["days"]),
                                                            i["activity_duration"])
@@ -565,25 +450,71 @@ with ruleset('user/activities/request'):
                         i["activity_duration"] * i["met_value"] * i["activities_done"])
 
                 goal_text += goalinfo_days + goalinfo_info + goalinfo_extra
-                random_content = randint(0, len(activity_content[h][2])-1)
+                index_for_activity = [x for x, y in enumerate(activity_content) if
+                                      y[0] == i["activity_name_english"]][0]
+                random_content = randint(0, len(activity_content[index_for_activity][2]) - 1)
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
                                      "CREDIT_DONE": i["activity_duration"] * i["met_value"] * i["activities_done"],
-                                     "CONTENT_DISPLAY": (': '.join((ld.content_title[activity_content[h][2][random_content]][c.m.language_code],
-                                                    activity_content[h][1][randint(0,random_content)]))),
-                                     "CONTENT_IMAGE": i["url"]}
+                                     "CONTENT_DISPLAY": (': '.join(
+                                         (
+                                             ld.content_title[
+                                                 activity_content[index_for_activity][2]
+                                                 [random_content]][c.m.language_code],
+                                             activity_content[index_for_activity][1]
+                                             [randint(0, random_content)]))),
+                                     "CONTENT_TEXT_TO_SPEECH": i["text_to_speech"],
+                                     "CONTENT_IMAGE": i["url"],
+                                     "ACTIVE_TODAY": i["active_today"],
+                                     "KEYWORD": i["keyword"]
+                                     }
                 activity_list.append(dict_for_activity)
-            if left_mets > 0:
-                title_display = ld.allocate_credits[c.m.language_code] + str(left_mets)
+
+            goal_start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
+                                         "query_one").create_thread()
+
+            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
+            if nickname:
+                nickname = " " + nickname
             else:
-                title_display=ld.weekly_credits[c.m.language_code] + str(weekly_goal_mets)
+                nickname = ""
+            text_to_speech_sub = ld.text_to_speech["goal_info"][c.m.language_code]
+            print(activity_active_today)
+            if allocated_mets == 0 and goal_start_date.date() == date.today():
+                text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["new_week"][c.m.language_code]
+            elif allocated_mets == 0:
+                text_to_speech_main = ld.text_to_speech["allocate_mets_zero"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["allocate_credits"][c.m.language_code] + str(left_mets)
+            elif left_mets > 0:
+                text_to_speech_main = ld.text_to_speech["allocate_mets"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["allocate_credits"][c.m.language_code] + str(left_mets)
+            elif len(activity_active_today) == 1:
+                text_to_speech_main = ld.text_to_speech["activity_today_single"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["activity_today_single"][c.m.language_code] + str(
+                    list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_active_today))[0])
+            elif activity_active_today:
+                text_to_speech_main = ld.text_to_speech["activity_today_multiple"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["activity_today_multiple"][c.m.language_code] \
+                                + ", ".join(
+                    list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_active_today)))
+            elif len(activity_missed) > 0:
+                text_to_speech_main = ld.text_to_speech["activity_missed"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["activity_missed"][c.m.language_code] + ", ".join(
+                    list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_missed)))
+            else:
+                text_to_speech_main = ld.text_to_speech["on_track"][c.m.language_code].format(nickname)
+                title_display = ""
+
             topic = "eu/agewell/event/reasoner/user/activities/response"
-            message_dict = jd.create_useractivity_notification(topic=topic, client_id=c.m.client_id,
-                                                               goal_credits=weekly_goal_mets,
-                                                               goal_content_display=goal_text,
-                                                               activities_list=activity_list,
-                                                               language=c.m.language_code,
-                                                               title_display=title_display)
+            message_dict = jd.create_user_activity_response(topic=topic, client_id=c.m.client_id,
+                                                            goal_credits=weekly_goal_mets,
+                                                            content_display_sub=goal_text,
+                                                            activities_list=activity_list,
+                                                            language=c.m.language_code,
+                                                            title_display=title_display,
+                                                            text_to_speech_sub=text_to_speech_sub,
+                                                            text_to_speech_main=text_to_speech_main)
 
             publish_message(c.m.client_id, topic, message_dict)
         except Exception  as e:
@@ -599,8 +530,15 @@ with ruleset('delete/user'):
         sql_statement = f" DELETE from user_info where id = '{c.m.client_id}'"
         db.DbQuery(sql_statement, "insert").create_thread()
 
-
-
+# manually finish task
+with ruleset('user/activities/status/message'):
+    @when_all(m.dimension_id == 1)
+    def finish_task(c):
+        sid = uuid.uuid1().int
+        task_id = db.DbQuery(ss.query("get_task_id", client_id=c.m.client_id, activity_id=c.m.activity_id),
+                             "query_one").create_thread()
+        post("notification/evening", {"sid": sid, "client_id": c.m.client_id, "language_code": c.m.language_code,
+                                      "activity_type": c.m.activity_id, "task_id": task_id, "user_input": True})
 
 with flowchart("goal"):
     # calculate percentage of goal done and adjust the new goal dependent
@@ -629,7 +567,7 @@ with flowchart("goal"):
                 sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
                                  f"ON s.type_id = activity.type_id JOIN task a ON a.activity_id = "
                                  f"activity.activity_id WHERE a.active='True' and a.activity_done='True'"
-                                 f"and a.activity_id IN (SELECT m.activity_id from activity m WHERE " 
+                                 f"and a.activity_id IN (SELECT m.activity_id from activity m WHERE "
                                  f"m.goal_id = {goal_id})")
                 done_mets = db.DbQuery(sql_statement, "query_all").create_thread()
                 try:
@@ -667,7 +605,7 @@ with flowchart("goal"):
                     print(content_2)
 
                 sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
-                                 f"('{c.m.client_id}','{end_date+timedelta(seconds=1)}' "
+                                 f"('{c.m.client_id}','{end_date + timedelta(seconds=1)}' "
                                  f",'{run_time}', {new_goal})")
                 db.DbQuery(sql_statement, "insert").create_thread()
                 s.new_goal_mets = new_goal
@@ -743,7 +681,7 @@ with flowchart("goal"):
                     updated_goal_mets = s.new_goal_mets
 
                 sql_statement = (f"UPDATE goal SET met_required = {updated_goal_mets} "
-                                 f"WHERE user_id = '{s.client_id}' and CURRENT_TIMESTAMP between " 
+                                 f"WHERE user_id = '{s.client_id}' and CURRENT_TIMESTAMP between "
                                  f"start_date and end_date")
                 print(sql_statement)
                 db.DbQuery(sql_statement, "insert").create_thread()
@@ -760,8 +698,8 @@ with ruleset('notification/morning'):
             s.sid = c.m.sid
             s.language_code = c.m.language_code
             sql_statement = f"Select activity_name FROM activity_type WHERE type_id = {c.m.kwargs['activity_type']}"
-            activity_name = db.DbQuery(sql_statement, "query_one").create_thread()
-            s.activity_name = ld.activity_name[activity_name][c.m.language_code]
+            s.activity_name_english = db.DbQuery(sql_statement, "query_one").create_thread()
+            s.activity_name = ld.activity_name[s.activity_name_english][c.m.language_code]
             print(s.activity_name)
             c.post({"get_last_session": True})
         except Exception as e:
@@ -808,7 +746,7 @@ with ruleset('notification/morning'):
             sql_queries = [(
                 f"SELECT m.content{s.language_code}, m.template_id from template m where m.daily = '{c.m.value_session}' "
                 f"and NOT EXISTS(SELECT FROM message a WHERE m.template_id = a.template_id AND "
-                f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and " 
+                f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and "
                 f"s.user_id = '{s.client_id}'))"),
                 (
                     f"SELECT template.content{s.language_code}, template.template_id FROM message INNER JOIN template "
@@ -850,14 +788,18 @@ with ruleset('notification/morning'):
                              USING (purpose) ORDER  BY t.ord""")
             query_content = db.DbQuery(sql_statement, "query_all").create_thread()
             met_message = query_content[0][0].format(s.percentage_of_credits)
-            title = query_content[1][0]
+            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
+            personal_greeting = hf.personal_greetings(nickname, s.language_code)
+            title = personal_greeting + query_content[1][0]
             activity_name_message = query_content[2][0].format(s.activity_name, s.kwargs["duration"])
             print(activity_name_message, s.content_msg, met_message)
             content = activity_name_message + s.content_msg + met_message
 
             button_left = hf.create_buttons_dict(button_type="cancel", content="ignore", language_code=s.language_code)
             button_right = hf.create_buttons_dict(button_type="ok", content="thanks", language_code=s.language_code)
-            buttons = [button_right, button_left]
+            button_middle = hf.create_buttons_dict(button_type="postpone", content="postpone",
+                                                   language_code=s.language_code)
+            buttons = [button_right, button_left, button_middle]
             topic = f"eu/agewell/event/reasoner/notification/message"
             notification_name = "notification/morning"
             message_dict = jd.create_notification_message(topic=topic, client_id=s.client_id, notification_id=s.sid,
@@ -870,31 +812,71 @@ with ruleset('notification/morning'):
             print(e)
 
 
-    @when_all(+m.button_type)
+    @when_all(m.button_type == "ok")
     def get_feedback(c):
-        if c.m.button_type == "ok":
-            feedback = 1
-        else:
-            feedback = 2
-
-        sql_statement = (f"UPDATE notification SET rating = {feedback} "
+        sql_statement = (f"UPDATE notification SET rating = 1"
                          f"WHERE notification_id = '{c.m.sid}'")
         db.DbQuery(sql_statement, "insert").create_thread()
         c.delete_state()
 
+
+    @when_all(m.button_type == "cancel")
+    def get_feedback(c):
+        sql_statement = (f"UPDATE notification SET rating = 2"
+                         f"WHERE notification_id = '{c.m.sid}'")
+        db.DbQuery(sql_statement, "insert").create_thread()
+        c.delete_state()
+
+
+    @when_all(m.button_type == "postpone")
+    def get_feedback(c):
+        try:
+
+            sql_statement = (f"UPDATE notification SET rating = 3"
+                             f"WHERE notification_id = '{c.m.sid}'")
+            db.DbQuery(sql_statement, "insert").create_thread()
+            scheduler_id_morning = s.client_id + str(s.activity_name_english) + str(datetime.weekday(date.today())) + \
+                                   "morning_notification "
+            date_for_scheduler = datetime.now() + timedelta(hours=randint(1, 3))
+            _schedule.CreateSchedulerJob(date_for_scheduler, s.client_id,
+                                         scheduler_id=scheduler_id_morning,
+                                         activity_type=s.kwargs['activity_type'], postpone_time="notification/morning",
+                                         duration=int(s.kwargs["duration"])).postpone()
+            c.delete_state()
+        except Exception as e:
+            print(e)
+
 with flowchart('notification/evening'):
     with stage("input"):
         to('first_message').when_all(+m.scheduler_id)
+        to('manual').when_all(+m.user_input)
+
+    with stage('manual'):
+        @run
+        def define_variables(c):
+            s.sid = c.m.sid
+            s.client_id = c.m.client_id
+            s.task_id = c.m.task_id
+            s.activity_type = c.m.activity_type
+            s.language_code = c.m.language_code
+            s.questions = []
+            sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
+                             f"({s.sid},'{s.client_id}','{datetime.now()}', 0)")
+            db.DbQuery(sql_statement, "insert").create_thread()
+
+
+        to('done')
 
     with stage('first_message'):
         @run
         def create_message(c):
             s.sid = c.m.sid
             s.client_id = c.m.client_id
-            s.kwargs = c.m.kwargs
+            s.task_id = c.m.kwargs['task_id']
+            s.activity_type = c.m.kwargs['activity_type']
             s.language_code = c.m.language_code
             s.questions = []
-            sql_statement = f"Select activity_name FROM activity_type WHERE type_id = {c.m.kwargs['activity_type']}"
+            sql_statement = f"Select activity_name FROM activity_type WHERE type_id = {s.activity_type}"
             activity_name = db.DbQuery(sql_statement, "query_one").create_thread()
             activity_name = ld.activity_name[activity_name][c.m.language_code]
             sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
@@ -904,13 +886,17 @@ with flowchart('notification/evening'):
                              USING (purpose) ORDER  BY t.ord""")
 
             query_content = db.DbQuery(sql_statement, "query_all").create_thread()
-            s.title = query_content[0][0].format(activity_name)
+            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
+            personal_greeting = hf.personal_greetings(nickname, s.language_code)
+            s.title = personal_greeting + query_content[0][0].format(activity_name)
             s.content = query_content[1][0]
             button_left = hf.create_buttons_dict(button_type="cancel", content="no", language_code=c.m.language_code,
                                                  wait=True)
             button_right = hf.create_buttons_dict(button_type="ok", content="didit", language_code=c.m.language_code,
                                                   wait=True)
-            s.buttons = [button_right, button_left]
+            button_middle = hf.create_buttons_dict(button_type="postpone", content="postpone",
+                                                   language_code=s.language_code)
+            s.buttons = [button_right, button_left, button_middle]
 
 
         to("send_message")
@@ -918,17 +904,22 @@ with flowchart('notification/evening'):
     with stage('done'):
         @run
         def create_message(c):
-            sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {s.kwargs['task_id']}"
-            db.DbQuery(sql_statement, "insert").create_thread()
-            sql_statement = f"Select content{s.language_code} FROM template WHERE daily = 'pos'"
-            s.title = db.DbQuery(sql_statement, "query_one").create_thread()
-            sql_statement = (
-                f"Select content{s.language_code} FROM template WHERE purpose = 'notification_evening_done'")
-            s.content = db.DbQuery(sql_statement, "query_one").create_thread()
-            button_left = hf.create_buttons_dict(button_type="dislike", content="hard", language_code=s.language_code)
-            button_middle = hf.create_buttons_dict(button_type="like", content="right", language_code=s.language_code)
-            button_right = hf.create_buttons_dict(button_type="easy", content="easy", language_code=s.language_code)
-            s.buttons = [button_right, button_left, button_middle]
+            try:
+                sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {s.task_id}"
+                db.DbQuery(sql_statement, "insert").create_thread()
+                sql_statement = f"Select content{s.language_code} FROM template WHERE daily = 'pos'"
+                s.title = db.DbQuery(sql_statement, "query_one").create_thread()
+                sql_statement = (
+                    f"Select content{s.language_code} FROM template WHERE purpose = 'notification_evening_done'")
+                s.content = db.DbQuery(sql_statement, "query_one").create_thread()
+                button_left = hf.create_buttons_dict(button_type="dislike", content="hard",
+                                                     language_code=s.language_code)
+                button_middle = hf.create_buttons_dict(button_type="like", content="right",
+                                                       language_code=s.language_code)
+                button_right = hf.create_buttons_dict(button_type="easy", content="easy", language_code=s.language_code)
+                s.buttons = [button_right, button_left, button_middle]
+            except Exception as e:
+                print(e)
 
 
         to("send_message")
@@ -953,17 +944,30 @@ with flowchart('notification/evening'):
                 options=[str(i[0]) for i in reasons])
             ]
             s.questions = hf.create_question_dict(content_display=[""], items=[item_list])
-            s.buttons = [hf.create_buttons_dict(button_type="next", content="next", language_code=s.language_code, wait=True)]
+            s.buttons = [
+                hf.create_buttons_dict(button_type="next", content="next", language_code=s.language_code, wait=True)]
 
 
         to("send_message")
+
+    with stage('postpone'):
+        @run
+        def get_feedback(c):
+            scheduler_id_evening = s.client_id + str(s.activity_name_english) + str(datetime.weekday(date.today())) + \
+                                   "evening_notification"
+            date_for_scheduler = datetime.now() + timedelta(hours=randint(1, 2))
+            _schedule.CreateSchedulerJob(date_for_scheduler, s.client_id,
+                                         scheduler_id=scheduler_id_evening,
+                                         activity_type=s.activity_type, task_id=s.task_id,
+                                         postpone_time="notification/evening").postpone()
+            c.delete_state()
 
     with stage('insert_difficulty'):
         @run
         def create_message(c):
             s.answer = c.m.button_type
             sql_statement = (f"UPDATE task set feedback = '{s.answer}' WHERE "
-                             f" task_id = {s.kwargs['task_id']}")
+                             f" task_id = {s.task_id}")
             print(sql_statement)
             db.DbQuery(sql_statement, "insert").create_thread()
 
@@ -980,7 +984,7 @@ with flowchart('notification/evening'):
             print(c.m.questionnaire_answers)
             s.answer = reasons[str(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0])]
             sql_statement = (f"UPDATE task set feedback = '{s.answer}' WHERE "
-                             f" task_id = {s.kwargs['task_id']}")
+                             f" task_id = {s.task_id}")
             print(sql_statement)
             db.DbQuery(sql_statement, "insert").create_thread()
 
@@ -1003,6 +1007,7 @@ with flowchart('notification/evening'):
 
         to('done').when_all(m.button_type == 'ok')
         to('not_done').when_all(m.button_type == 'cancel')
+        to('postpone').when_all(m.button_type == 'postpone')
         to('insert_difficulty').when_all(
             (m.button_type == 'easy') | (m.button_type == 'like') | (m.button_type == 'dislike'))
         to('insert_reason').when_all(m.button_type == 'next')
@@ -1022,10 +1027,10 @@ with flowchart('notification/evening'):
                 type_to_choose = message_type[s.answer]
 
                 sql_queries = [(
-                    f"SELECT m.content{s.language_code}, m.template_id from template m where " 
+                    f"SELECT m.content{s.language_code}, m.template_id from template m where "
                     f"m.daily = '{type_to_choose[0]}' "
                     f"and NOT EXISTS(SELECT FROM message a WHERE m.template_id = a.template_id AND "
-                    f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and " 
+                    f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and "
                     f"s.user_id = '{s.client_id}'))"),
                     (
                         f"SELECT template.content{s.language_code}, template.template_id FROM message INNER JOIN "
@@ -1034,17 +1039,17 @@ with flowchart('notification/evening'):
                         f"message.notification_id WHERE notification.user_id = '{s.client_id}' and notification"
                         f".rating = 1"),
                     (
-                        f"select content{s.language_code}, template_id from template where daily = " 
+                        f"select content{s.language_code}, template_id from template where daily = "
                         f"'{type_to_choose[0]}'")]
                 print(sql_queries)
                 content_first_msg = db.ChooseMessage(sql_queries, s.sid, s.client_id).choose_right_message()
 
                 if type_to_choose[1] != "":
                     sql_queries = [(
-                        f"SELECT m.content{s.language_code}, m.template_id from template m where m.daily = " 
+                        f"SELECT m.content{s.language_code}, m.template_id from template m where m.daily = "
                         f"'{type_to_choose[1]}' "
                         f"and NOT EXISTS(SELECT FROM message a WHERE m.template_id = a.template_id AND "
-                        f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and " 
+                        f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and "
                         f"s.user_id = '{s.client_id}'))"),
                         (
                             f"SELECT template.content{s.language_code}, template.template_id FROM message INNER JOIN "
@@ -1053,14 +1058,15 @@ with flowchart('notification/evening'):
                             f"message.notification_id WHERE notification.user_id = '{s.client_id}' and notification"
                             f".rating = 1"),
                         (
-                            f"select content{s.language_code}, template_id from template where daily = " 
+                            f"select content{s.language_code}, template_id from template where daily = "
                             f"'{type_to_choose[1]}'")]
                     content_second_msg = db.ChooseMessage(sql_queries, s.sid, s.client_id).choose_right_message()
                 else:
                     content_second_msg = ""
                 content = content_first_msg + content_second_msg
                 print(content)
-                button_left = hf.create_buttons_dict(button_type="cancel", content="ignore", language_code=s.language_code)
+                button_left = hf.create_buttons_dict(button_type="cancel", content="ignore",
+                                                     language_code=s.language_code)
                 button_right = hf.create_buttons_dict(button_type="ok", content="thanks", language_code=s.language_code)
                 buttons = [button_right, button_left]
                 message_dict = jd.create_notification_message(topic=s.topic, client_id=s.client_id,
