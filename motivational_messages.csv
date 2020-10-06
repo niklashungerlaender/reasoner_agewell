@@ -148,7 +148,7 @@ Message ID;Content_en;Content_de;Content_it;Content_nl;info;MPAM;weekly;daily;di
 1048;Currently, your weekly goal consists of following activities:;Derzeit besteht dein wöchentliches Ziel aus folgenden Aktivitäten:;Attualmente, il tuo obiettivo settimanale consiste nelle seguneti attività:;Op dit moment bestaat je weekdoel uit de volgende activiteiten:;;0;;;;goalinfo_activities;;
 1049;This activity is equivalent to {} activity credits. ;Diese Aktivität entspricht {} Credits.;Questa arrività corrisponde a {} crediti.;Deze activiteit staat gelijk aan {} beweegpunten;;0;;;;goalinfo_activity_info;;
 1050;You achieved already {} credits.;Du hast bereits {} Credits erreicht.;Hai già acquisito {} crediti.;Je hebt al {} punten behaald.;;0;;;;goalinfo_activity_achieved;;
-1051;How was your {}?;Wie war dein {}?;Com'è stato il tuo {}?;Hoe ging je {}?;;0;;;;notification_evening_title;;
+1051;How was your {}?;Wie war dein {}?;Com'� stato il tuo {}?;Hoe ging je {}?;;0;;;;notification_evening_title;;
 1052;You were supposed to do it today. Where you able to do it?;Du hättest es heute tun sollen. Hast du es geschafft?;Avresti dovuto farlo oggi. Ci sei riuscito?;Je was van plan dit te doen vandaag. Is het gelukt?;;0;;;;notification_evening_content;;
 1053;Was it difficult for you?;War es schwierig für dich?;E' stato difficile per te?;Was het moeilijk voor je?;;0;;;;notification_evening_done;;
 1054;Why did you skip the activity?;Warum hast du die Aktivität nicht gemacht?;Come mai hai saltato l'attività?;Waarom heb je deze activiteit overgeslagen?;;0;;;;notification_evening_notdone_content;;
@@ -223,7 +223,7 @@ Message ID;Content_en;Content_de;Content_it;Content_nl;info;MPAM;weekly;daily;di
 1123;Another week is over;Eine weitere Woche ist vorüber;Un'altra settimana è finita;Weer een week voorbij;;0;;;;notification_goal_title;;
 1124;Increase;Erhöhe;Aumentare;Toename;;0;;;;increase;;
 1125;Decrease;Vermindere;Diminuire;Verminderen;;0;;;;decrease;;
-1126;Hey there! There is an upcoming event;Hallo! Es gibt eine bevorstehende Veranstaltung;Ciao! C'è un evento imminente;Hallo! Er komt een evenement aan;;0;;;;notification_morning_title;;
+1126;There is an upcoming event;Es gibt eine bevorstehende Veranstaltung;C'è un evento imminente;Er komt een evenement aan;;0;;;;notification_morning_title;;
 1127;Hey, please answer these short questions. ;Hallo, bitte beantworte kurz diese Fragen;Hey, please answer these short questions. ;H�, beantwoord deze korte vragen alsjeblieft.;;0;;;;mpam_title;;
-1128;Can you tell me why you wish to engage in physical activity?;Kannst du mir sagen warum du dich körperlich mehr bewegen willst? ;Can you tell me why you wish to engage in physical activity?;Kunt u mij vertellen waarom u aan lichaamsbeweging wilt doen?;;0;;;;mpam_content;;
+1128;Can you tell me why you wish to engage in physical activity?;Kannst du mir sagen warum du dich körperlich mehr bewegen willst? ;Puoi dirmi perch� desideri dedicarti all'attivit� fisica?;Kunt u mij vertellen waarom u aan lichaamsbeweging wilt doen?;;0;;;;mpam_content;;
 1129; For your first week I give you {} credits so you get to know the system and don't overdo it. ;Für deine erste Woche gebe ich dir {} Credits, damit du das System kennenlernst und es nicht übertreibst.;Per la tua prima settimana hai {} crediti in modo da conoscere il sistema e non esagerare. ;Voor je eerste week geef ik je {} punten zodat je het systeem leert kennen en het niet overdrijft.;;0;;;;ipaq_credits;;
