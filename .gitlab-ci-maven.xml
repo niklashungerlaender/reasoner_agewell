@@ -23,5 +23,52 @@
 			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
 			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
 		</server>
+		<server>
+			<id>central-mirror</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>apache-mirror</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>apache-snapshots-mirror</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
+		<server>
+			<id>jcenter-mirror</id>
+			<username>${env.CI_MAVEN_USER_ARCSMED}</username>
+			<password>${env.CI_MAVEN_PASS_ARCSMED}</password>
+		</server>
 	</servers>
+
+	<mirrors>
+		<mirror>
+			<id>central-mirror</id>
+			<name>Central Mirror Repository</name>
+			<url>https://nexus.arcsmed.at/content/repositories/central</url>
+			<mirrorOf>central</mirrorOf>
+		</mirror>
+		<mirror>
+			<id>apache-mirror</id>
+			<name>Apache Mirror Repository</name>
+			<url>https://nexus.arcsmed.at/content/repositories/apache</url>
+			<mirrorOf>apache</mirrorOf>
+		</mirror>
+		<mirror>
+			<id>apache-snapshots-mirror</id>
+			<name>Apache Snapshots Mirror Repository</name>
+			<url>https://nexus.arcsmed.at/content/repositories/apache-snapshots</url>
+			<mirrorOf>apache-snapshots</mirrorOf>
+		</mirror>
+		<mirror>
+			<id>jcenter-mirror</id>
+			<name>JCenter Mirror Repository</name>
+			<url>https://nexus.arcsmed.at/content/repositories/jcenter</url>
+			<mirrorOf>jcenter</mirrorOf>
+		</mirror>
+	</mirrors>
 </settings>
