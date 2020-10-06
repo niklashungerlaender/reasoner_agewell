@@ -2,6 +2,13 @@ from datetime import datetime, timedelta
 from random import uniform
 import _languagedicts as ld
 import re
+import pyphen
+
+
+def get_hyphenation(text, language):
+    dic = pyphen.Pyphen(lang=language)
+    hyphenated = dic.inserted(text)
+    return str(hyphenated)
 
 
 def daterange(date1, date2):
@@ -45,9 +52,10 @@ def create_buttons_dict(button_type="", content="", wait=False, tts="",
 def update_notification_time(list_of_notification_ids, time_of_day, new_time):
     import _schedule
     for i in list_of_notification_ids:
-        _schedule.scheduler.modify_job(job_id=i[0],
-                                       run_date=datetime.combine(i[1],
-                                       get_reminder_time(time_of_day, new_time)))
+        _schedule.scheduler.reschedule_job(job_id=i[0],
+                                           run_date=datetime.combine(datetime.utcfromtimestamp(i[1]),
+                                           get_reminder_time(time_of_day, new_time)))
+
 
 def get_reminder_time(reminder_type, reminder_id):
     reminder = {"morning": {"0": [6, 8], "1": [8, 10], "2": [10, 12], "not_defined": [9, 9]},
@@ -59,10 +67,31 @@ def get_reminder_time(reminder_type, reminder_id):
     return to_time
 
 
+def personal_greetings(nickname, language_code):
+    try:
+        now = datetime.now().time()
+        now = int(now.strftime("%H"))
+        if now < 11:
+            greeting =ld.greetings["morning"][language_code]
+        elif now < 18:
+            greeting =ld.greetings["afternoon"][language_code]
+        else:
+            greeting = ld.greetings["evening"][language_code]
+        if nickname:
+            nickname = " " + nickname
+        else:
+            nickname = ""
+        personal_greeting = greeting + nickname + "!"
+        return personal_greeting
+    except Exception as e:
+        print (e)
+
+
+
 def string_formatting(input_string):
-    rx = r"\.(?=\S)"
+    rx = r'(?<=[.,!?:])(?=[^\s])'
     s = input_string
-    result = re.sub(rx, ". ", s)
+    result = re.sub(rx, " ", s)
     return result
 
 
