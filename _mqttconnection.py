@@ -10,9 +10,9 @@ def on_connect(client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe("agewell/+/eu/agewell/event/reasoner/#")
-    client.subscribe("agewell/+/at/ac/ait/hbs/dialog/client/#")
-    client.subscribe("eu/agewell/event/reasoner/#")
+    client.subscribe(mqtt_topic + "/+/eu/agewell/event/reasoner/#")
+    client.subscribe(mqtt_topic + "/+/at/ac/ait/hbs/dialog/client/#")
+    client.subscribe("eu/" + mqtt_topic + "/event/reasoner/#")
 
 
 # The callback for when a PUBLISH message is received from the server.
@@ -62,10 +62,11 @@ def connect_to_mqtt(username, password, host, port):
 
 def publish_message(client_id, topic, message):
     try:
-        prefix = f"agewell/{client_id}/"
+        prefix = f"{mqtt_topic}/{client_id}/"
         topic = prefix + topic
         message = json.dumps(message)
         client_connection.publish(topic, message)
+        print (topic)
     except Exception as e:
         print(e, "publish")
 
@@ -73,4 +74,6 @@ def publish_message(client_id, topic, message):
 config_object = ConfigParser()
 config_object.read("config.ini")
 mqtt_login = config_object["MQTT"]
-client_connection = connect_to_mqtt(mqtt_login["user"], mqtt_login["password"], mqtt_login["host"], int(mqtt_login["port"]))
+mqtt_topic = mqtt_login["topic"]
+client_connection = connect_to_mqtt(mqtt_login["user"], mqtt_login["password"], mqtt_login["host"],
+                                    int(mqtt_login["port"]))
