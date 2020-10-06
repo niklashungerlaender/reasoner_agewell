@@ -22,12 +22,17 @@ scheduler = BackgroundScheduler(jobstores=jobstores)
 
 
 class CreateSchedulerJob:
-    def __init__(self, runtime, user_id, reminder_id, scheduler_id=None, **kwargs):
+    def __init__(self, runtime, user_id, reminder_id=None, scheduler_id=None, postpone_time = None, **kwargs):
         self.runtime = runtime
         self.scheduler_id = scheduler_id
         self.user_id = user_id
         self.karguments = kwargs
         self.reminder_id = reminder_id
+        self.postpone_time = postpone_time
+
+    def postpone(self):
+        self.arguments = [self.postpone_time, self.user_id]
+        self.create_job()
 
     def morning_notification(self):
         self.date_for_scheduler = datetime.combine(self.runtime, hf.get_reminder_time("morning", self.reminder_id))
