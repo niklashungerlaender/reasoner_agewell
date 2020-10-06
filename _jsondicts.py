@@ -1,5 +1,3 @@
-from collections import defaultdict
-from random import randint
 import _languagedicts as ld
 import _helperfunctions as hf
 
@@ -13,6 +11,7 @@ def get_content(i, pos_t, pos_c, language):
     return rest
 """
 
+
 def create_notification_message(topic="", client_id="", notification_id=1,
                                 title="", content="", questions=[],
                                 buttons=[], instance_id="", notification_name="",
@@ -21,8 +20,8 @@ def create_notification_message(topic="", client_id="", notification_id=1,
     nd["properties"]["CLIENT_ID"] = client_id
     nd["properties"]["DIMENSION_ID"] = 1
     nd["properties"]["LANGUAGE_CODE"] = language
-    nd["properties"]["TITLE_DISPLAY"] = title
-    nd["properties"]["TITLE_TEXT_TO_SPEECH"] = title
+    nd["properties"]["TITLE_DISPLAY"] = hf.string_formatting(title)
+    nd["properties"]["TITLE_TEXT_TO_SPEECH"] = hf.string_formatting(title)
     nd["properties"]["CONTENT_DISPLAY"] = hf.string_formatting(content)
     nd["properties"]["CONTENT_TEXT_TO_SPEECH"] = hf.string_formatting(content)
     nd["properties"]["NOTIFICATION_ID"] = str(notification_id)
@@ -31,6 +30,7 @@ def create_notification_message(topic="", client_id="", notification_id=1,
     nd["properties"]["BUTTONS"] = buttons
     nd["properties"]["FIREBASE_INSTANCE_ID"] = instance_id
     nd["properties"]["NOTIFICATION_NAME"] = notification_name
+
 
     return nd
 
@@ -45,8 +45,11 @@ def create_credits_information_response(topic="", client_id="", text="", languag
 
 
 def create_activity_types_edit_message(topic="", activity_id="", client_id="", duration=[], selected_duration=[],
-                                       days=[], selected_days=[], language=""):
+                                       days=[], selected_days=[], language="", content_display_sub_screens=[]):
     try:
+        content_sub_screens = [{"ID": i[0], "CONTENT_DISPLAY": hf.string_formatting(i[1]),
+                                "CONTENT_TEXT_TO_SPEECH": i[2]}
+                               for i in content_display_sub_screens]
         nd = {"topic": topic, "properties": {}}
         nd["properties"]["CLIENT_ID"] = client_id
         nd["properties"]["DIMENSION_ID"] = 1
@@ -56,25 +59,30 @@ def create_activity_types_edit_message(topic="", activity_id="", client_id="", d
         nd["properties"]["DURATION"] = duration
         nd["properties"]["SELECTED_DAYS"] = selected_days
         nd["properties"]["SELECTED_DURATION"] = selected_duration
+        nd["properties"]["SUB_SCREENS"] = content_sub_screens
 
         return nd
     except Exception as e:
         print(e)
 
 
-def create_activity_types_message(topic="", client_id="", types="",
-                                  days="", language=""):
+def create_activity_types_response(topic="", client_id="", types="",
+                                  days="", language="", content_display_sub_screens = []):
     try:
         types_list = [
             {"ID": i[0], "TITLE_DISPLAY": ld.activity_name[i[1]][language], "DAYS": days, "DURATION": i[2],
              "CONTENT_DISPLAY": i[3], "CONTENT_IMAGE": i[4]}
             for i in types
         ]
+        content_sub_screens = [{"ID":i[0], "CONTENT_DISPLAY": hf.string_formatting(i[1]),
+                               "CONTENT_TEXT_TO_SPEECH": i[2]}
+                               for i in content_display_sub_screens]
         nd = {"topic": topic, "properties": {}}
         nd["properties"]["CLIENT_ID"] = client_id
         nd["properties"]["DIMENSION_ID"] = 1
         nd["properties"]["LANGUAGE_CODE"] = language
         nd["properties"]["TYPES"] = types_list
+        nd["properties"]["SUB_SCREENS"] = content_sub_screens
         return nd
     except Exception as e:
         print(e)
@@ -95,17 +103,30 @@ def create_dimension_notification(topic="", client_id="", title="",
     return nd
 
 
-def create_useractivity_notification(topic="", client_id="", goal_credits="",
-                                     goal_content_display="", language="",
-                                     activities_list="", title_display = ""):
+def create_user_activity_response(topic="", client_id="", goal_credits="",
+                                     content_display_sub="", language="",
+                                     activities_list="", title_display = "",
+                                     text_to_speech_sub="", text_to_speech_main=""):
+    content_sub_screens = [{"ID": "goal_info", "CONTENT_DISPLAY":hf.string_formatting(content_display_sub),
+                           "CONTENT_TEXT_TO_SPEECH":text_to_speech_sub}]
     nd = {"topic": topic, "properties": {}}
     nd["properties"]["CLIENT_ID"] = client_id
     nd["properties"]["DIMENSION_ID"] = 1
     nd["properties"]["TITLE_DISPLAY"] = title_display
     nd["properties"]["GOAL_CREDITS"] = goal_credits
-    nd["properties"]["CONTENT_DISPLAY"] = hf.string_formatting(goal_content_display)
     nd["properties"]["CONTENT_IMAGE"] = "https://proself.org/storage/images/ait/goal.jpg"
     nd["properties"]["LANGUAGE_CODE"] = language
     nd["properties"]["ACTIVITIES"] = activities_list
+    nd["properties"]["SUB_SCREENS"] = content_sub_screens
+    nd["properties"]["CONTENT_TEXT_TO_SPEECH"] = text_to_speech_main
+
+    return nd
+
+
+def create_useractivity_response(topic="", client_id="", activity_id=""):
+    nd = {"topic": topic, "properties": {}}
+    nd["properties"]["CLIENT_ID"] = client_id
+    nd["properties"]["DIMENSION_ID"] = 1
+    nd["properties"]["ACTIVITY_ID"] = activity_id
 
     return nd
