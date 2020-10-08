@@ -68,9 +68,10 @@ greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorn
                                    nl="Goede dag"),
              "evening": dict(en="Good evening", de="Guten Abend", it="Buona serata", nl="Goedenavond")
                  }
-title_goal_screen = {"weekly_credits": dict(en="Your Credits for this week: ", de="Ihre Credits für diese Woche: ",
-                                            it="Crediti per questa settimana: ",
-                                            nl="Credits voor deze week: "),
+title_goal_screen = {"weekly_credits": dict(en="Achieved: {} Credits\nAllocated: {} Credits\nGoal: {} Credits",
+                                            de="Erreicht: {} Credits\nZugewiesen: {} Credits\nZiel: {} Credits",
+                                            it="Raggiunti: {} Crediti\nAssegnati: {} Crediti\nObiettivo: {} Crediti",
+                                            nl="Behaald: {} Credits\nToegewezen: {} Credits\nDoel: {} Credits"),
                      "new_week": dict(en="Welcome to a new week!", de="Willkommen in einer neuen Woche!",
                                       it="Crediti per questa settimana: ",
                                       nl="Credits voor deze week: "),
@@ -84,19 +85,19 @@ title_goal_screen = {"weekly_credits": dict(en="Your Credits for this week: ", d
                          nl="Credits voor deze week: "),
                      "activity_today_single": dict(
                          en="Your activity for today: ",
-                         de="Ihre heutige Aktivität: ",
+                         de="Deine heutige Aktivität: ",
                          nl="Contra-indicatie"),
                      "activity_today_multiple": dict(
                          en="Your activities for today: ",
-                         de="Ihre heutigen Aktivitäten: ",
+                         de="Deine heutigen Aktivitäten: ",
                          it="Controindicazione",
                          nl="Contra-indicatie"),
                      }
 
 text_to_speech = {"activity_today": dict(en="You have scheduled this activity for today. If you have it done already "
                                             "you can finish it by pressing the 'Activity Done' button.",
-                                         de="Du hast diese Aktivität für heute geplant. Wenn Sie die Aktivität "
-                                            "bereits getan haben, kannst du sie abschließen, indem du auf den Knopf "
+                                         de="Du hast diese Aktivität für heute geplant. Wenn du die Aktivität "
+                                            "bereits getan hast, kannst du sie abschließen, indem du auf den Knopf "
                                             "'Aktivität abschließen' klickst.",
                                          it="Mancia",
                                          nl="Tip"),

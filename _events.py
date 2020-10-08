@@ -272,11 +272,11 @@ with ruleset('user/activity/message'):
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration)).morning_notification()
-
+                    """
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
                                                  activity_type=c.m.activity_id, task_id=task_id).evening_notification()
-
+                    """
             except IndexError:
                 pass
             if len(dates_for_tasks) > 1:
@@ -368,18 +368,17 @@ with ruleset('user/activities/request'):
                                         "query_all").create_thread()
             try:
                 allocated_mets = sum(i[0] * i[1] for i in allocated_mets)
-                if allocated_mets > weekly_goal_mets:
-                    allocated_mets = weekly_goal_mets
                 left_mets = weekly_goal_mets - allocated_mets
             except:
                 allocated_mets = 0
                 left_mets = weekly_goal_mets
-
+            done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
+            done_mets = sum(i[0] * i[1] for i in done_mets)
             content_goalinfo = db.DbQuery(ss.query("get_goalinfo_content", language_code=c.m.language_code),
                                           "query_all").create_thread()
             goalinfo_info = content_goalinfo[0][0].format(weekly_goal_mets)
             goalinfo_achieved = content_goalinfo[1][0].format(allocated_mets)
-            if left_mets != 0:
+            if left_mets > 0:
                 goalinfo_remaining = content_goalinfo[2][0].format(left_mets)
             else:
                 goalinfo_remaining = ""
@@ -504,7 +503,9 @@ with ruleset('user/activities/request'):
                     list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_missed)))
             else:
                 text_to_speech_main = ld.text_to_speech["on_track"][c.m.language_code].format(nickname)
-                title_display = ""
+                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(done_mets,
+                                                                                                 allocated_mets,
+                                                                                                 weekly_goal_mets)
 
             topic = "eu/agewell/event/reasoner/user/activities/response"
             message_dict = jd.create_user_activity_response(topic=topic, client_id=c.m.client_id,
@@ -603,7 +604,7 @@ with flowchart("goal"):
 
                     content_2 = query_content[3][0].format(increase_decrease, increase_decrease_mets, new_goal)
                     print(content_2)
-
+                new_goal = round(new_goal,-1)
                 sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
                                  f"('{c.m.client_id}','{end_date + timedelta(seconds=1)}' "
                                  f",'{run_time}', {new_goal})")
@@ -788,7 +789,8 @@ with ruleset('notification/morning'):
                              USING (purpose) ORDER  BY t.ord""")
             query_content = db.DbQuery(sql_statement, "query_all").create_thread()
             met_message = query_content[0][0].format(s.percentage_of_credits)
-            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
+
+            nickname = db.DbQuery(ss.query("get_nickname", client_id=s.client_id), "query_one").create_thread()
             personal_greeting = hf.personal_greetings(nickname, s.language_code)
             title = personal_greeting + query_content[1][0]
             activity_name_message = query_content[2][0].format(s.activity_name, s.kwargs["duration"])
