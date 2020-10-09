@@ -272,11 +272,11 @@ with ruleset('user/activity/message'):
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration)).morning_notification()
-                    """
+
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
                                                  activity_type=c.m.activity_id, task_id=task_id).evening_notification()
-                    """
+
             except IndexError:
                 pass
             if len(dates_for_tasks) > 1:
