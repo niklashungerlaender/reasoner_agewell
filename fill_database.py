@@ -176,8 +176,8 @@ def insert_templates(connection, cursor):
 
 def main():
     connection, cursor = connect_to_db()
-    create_tables(connection,cursor)
-    insert_activities(connection, cursor)
+    #create_tables(connection,cursor)
+    #insert_activities(connection, cursor)
     insert_templates(connection, cursor)
     cursor.close()
     connection.close()
