@@ -9,6 +9,7 @@ from _mqttconnection import publish_message
 import _languagedicts as ld
 from random import randint
 import _sqlstatements as ss
+import math
 
 
 # schedules notifications for weekly goals from ruleset firstgoal/intern and flowchart goal
@@ -589,22 +590,24 @@ with flowchart("goal"):
                 title = query_content[0][0]
                 content_1 = query_content[1][0].format(percentage_done_mets)
 
-                if percentage_done_mets == 75:
+                if 75 >= percentage_done_mets >= 70:
                     new_goal = goal_mets
                     content_2 = query_content[2][0]
                 else:
                     if percentage_done_mets > 75:
-                        increase_decrease_mets = int((percentage_done_mets - 75) * 100 / goal_mets)
+                        increase_decrease_mets = int((percentage_done_mets - 75) * 100 / math.log(goal_mets))
                         new_goal = goal_mets + increase_decrease_mets
                         increase_decrease = query_content[4][0]
-                    if percentage_done_mets < 75:
-                        increase_decrease_mets = int(goal_mets / 100 * (-0.3333 * percentage_done_mets + 25))
+                    if percentage_done_mets < 70:
+                        increase_decrease_mets = int(goal_mets / 50 * (-0.333 * percentage_done_mets + 25))
                         new_goal = goal_mets - increase_decrease_mets
                         increase_decrease = query_content[5][0]
-
+                    new_goal = round(new_goal, -1)
+                    if new_goal < 100:
+                        new_goal = 100
                     content_2 = query_content[3][0].format(increase_decrease, increase_decrease_mets, new_goal)
                     print(content_2)
-                new_goal = round(new_goal,-1)
+
                 sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
                                  f"('{c.m.client_id}','{end_date + timedelta(seconds=1)}' "
                                  f",'{run_time}', {new_goal})")
@@ -673,19 +676,22 @@ with flowchart("goal"):
         @run
         def update_goal(c):
             try:
-                question_id = c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0]
-                if question_id == 1 or question_id == 2:
-                    updated_goal_mets = s.new_goal_mets + s.increase_decrease_values[str(question_id)]
-                elif question_id == 4 or question_id == 5:
-                    updated_goal_mets = s.new_goal_mets - s.increase_decrease_values[str(question_id)]
-                else:
-                    updated_goal_mets = s.new_goal_mets
+                if s.new_goal_mets > 100:
+                    question_id = c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0]
+                    if question_id == 1 or question_id == 2:
+                        updated_goal_mets = s.new_goal_mets + s.increase_decrease_values[str(question_id)]
+                    elif question_id == 4 or question_id == 5:
+                        updated_goal_mets = s.new_goal_mets - s.increase_decrease_values[str(question_id)]
+                    else:
+                        updated_goal_mets = s.new_goal_mets
 
-                sql_statement = (f"UPDATE goal SET met_required = {updated_goal_mets} "
-                                 f"WHERE user_id = '{s.client_id}' and CURRENT_TIMESTAMP between "
-                                 f"start_date and end_date")
-                print(sql_statement)
-                db.DbQuery(sql_statement, "insert").create_thread()
+                    sql_statement = (f"UPDATE goal SET met_required = {updated_goal_mets} "
+                                     f"WHERE user_id = '{s.client_id}' and CURRENT_TIMESTAMP between "
+                                     f"start_date and end_date")
+                    print(sql_statement)
+                    db.DbQuery(sql_statement, "insert").create_thread()
+                else:
+                    pass
                 c.delete_state()
             except Exception as e:
                 print(e)
