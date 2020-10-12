@@ -168,16 +168,16 @@ def insert_activities(connection, cursor):
 
 
 def insert_templates(connection, cursor):
-    with open('motivational_messages.csv', 'r') as f:
-        next(f) # Skip the header row.
-        cursor.copy_from(f, 'template', sep=';')
-    connection.commit()
+        with open('motivational_messages.csv', 'r', encoding="Latin-1") as f:
+            next(f) # Skip the header row.
+            cursor.copy_from(f, 'template', sep=';')
+        connection.commit()
 
 
 def main():
     connection, cursor = connect_to_db()
-    #create_tables(connection,cursor)
-    #insert_activities(connection, cursor)
+    create_tables(connection,cursor)
+    insert_activities(connection, cursor)
     insert_templates(connection, cursor)
     cursor.close()
     connection.close()
