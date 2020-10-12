@@ -106,9 +106,10 @@ def create_dimension_notification(topic="", client_id="", title="",
 def create_user_activity_response(topic="", client_id="", goal_credits="",
                                      content_display_sub="", language="",
                                      activities_list="", title_display = "",
-                                     text_to_speech_sub="", text_to_speech_main=""):
+                                     text_to_speech_sub="", text_to_speech_main="",
+                                  title_display_sub=""):
     content_sub_screens = [{"ID": "goal_info", "CONTENT_DISPLAY":hf.string_formatting(content_display_sub),
-                           "CONTENT_TEXT_TO_SPEECH":text_to_speech_sub}]
+                           "CONTENT_TEXT_TO_SPEECH":text_to_speech_sub, "TITLE_DISPLAY":title_display_sub}]
     nd = {"topic": topic, "properties": {}}
     nd["properties"]["CLIENT_ID"] = client_id
     nd["properties"]["DIMENSION_ID"] = 1

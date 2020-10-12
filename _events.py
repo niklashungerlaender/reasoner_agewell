@@ -472,13 +472,14 @@ with ruleset('user/activities/request'):
 
             goal_start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
                                          "query_one").create_thread()
+            goal_end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id),
+                                         "query_one").create_thread()
 
             nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
             if nickname:
                 nickname = " " + nickname
             else:
                 nickname = ""
-            text_to_speech_sub = ld.text_to_speech["goal_info"][c.m.language_code]
             print(activity_active_today)
             if allocated_mets == 0 and goal_start_date.date() == date.today():
                 text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname)
@@ -508,6 +509,12 @@ with ruleset('user/activities/request'):
                                                                                                  allocated_mets,
                                                                                                  weekly_goal_mets)
 
+            text_to_speech_sub = ld.text_to_speech["goal_info"][c.m.language_code]
+            start_day = ld.weekDays[c.m.language_code][datetime.weekday(goal_start_date)]
+            end_day = ld.weekDays[c.m.language_code][datetime.weekday(goal_end_date)]
+            days_left = (goal_end_date-datetime.today()).days
+            title_display_sub = ld.title_goal_screen["personal_week"][c.m.language_code].format(start_day, end_day,
+                                                                                                days_left)
             topic = "eu/agewell/event/reasoner/user/activities/response"
             message_dict = jd.create_user_activity_response(topic=topic, client_id=c.m.client_id,
                                                             goal_credits=weekly_goal_mets,
@@ -516,7 +523,8 @@ with ruleset('user/activities/request'):
                                                             language=c.m.language_code,
                                                             title_display=title_display,
                                                             text_to_speech_sub=text_to_speech_sub,
-                                                            text_to_speech_main=text_to_speech_main)
+                                                            text_to_speech_main=text_to_speech_main,
+                                                            title_display_sub=title_display_sub)
 
             publish_message(c.m.client_id, topic, message_dict)
         except Exception  as e:
