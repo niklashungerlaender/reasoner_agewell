@@ -137,7 +137,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       en="Hello{}. I see you haven't allocated any credits for this week. Please do so in order "
                          "to stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch keine Credits für diese Woche vergeben. Bitte "
-                         "hole das das nach um aktiv zu bleiben.",
+                         "hole das nach um aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto crediti per questa settimana. Si prega di continuare a "
                          "farlo per rimanere in attività.",
                       nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit om actief te blijven."),
