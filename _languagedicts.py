@@ -165,7 +165,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                   "duration": dict(
                       en="Please choose a duration for your activity. You can see how the activity affects "
                          "your weekly goal on the bottom of the screen.",
-                      de="Bitte wähle eine Dauer für deone Aktivität. Am unteren Bildschirmrand kannst "
+                      de="Bitte wähle eine Dauer für deine Aktivität. Am unteren Bildschirmrand kannst "
                          "du sehen, wie sich die Aktivität auf dein wöchentliches Ziel auswirkt.",
                       it="Scegli la durata della tua attività. Nella parte inferiore dello schermo, puoi vedere "
                          "quanto l'attività influisce sul tuo obiettivo settimanale.",
