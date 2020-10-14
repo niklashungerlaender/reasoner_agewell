@@ -23,11 +23,12 @@ weekDays = {"en": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satu
             "it": ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"],
             "nl": ["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]
             }
+minutes =  dict(en="Minutes", de="Minuten", it="Minuti", nl="Minuten")
 ipaq = {
     "days_content": dict(en="Days per week:", de="Tage pro Woche:", it="Giorni alla settimana:", nl="Dagen per week:"),
     "minutes_content": dict(en="Minutes per day:", de="Minuten pro Tag:", it="Minuti al giorno:", nl="Minuten per dag"),
-    "days": dict(en="Days per week:", de="Tage pro Woche:", it="Giorni alla settimana:", nl="Dagen per week:"),
-    "minutes": dict(en="Minutes per day:", de="Minuten pro Tag:", it="Minuti al giorno:", nl="Minuten per dag")
+    "days": dict(en="Days per week:", de="Tage pro Woche:", it="Giorni alla settimana:", nl="Dagen per week:")
+
 }
 
 mpam = {"enjoyment": dict(en="Because it is fun", de="Weil es Spaß macht", it="Perché è divertente",
@@ -63,7 +64,7 @@ content_title = {"bullet point": dict(en="Tip", de="Tipp", it="Mancia", nl="Tip"
                  "contraindication": dict(en="Warning", de="Kontraindikation", it="Controindicazione",
                                           nl="Contra-indicatie")}
 
-greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorno", nl="Fietsen"),
+greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorno", nl="Goedemorgen"),
              "afternoon": dict(en="Good afternoon", de="Guten Tag", it="Buon pomeriggio",
                                    nl="Goede dag"),
              "evening": dict(en="Good evening", de="Guten Abend", it="Buona serata", nl="Goedenavond")
@@ -136,7 +137,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       en="Hello{}. I see you haven't allocated any credits for this week. Please do so in order "
                          "to stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch keine Credits für diese Woche vergeben. Bitte "
-                         "hole das das nach um weiterhin aktiv zu bleiben.",
+                         "hole das das nach um aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto crediti per questa settimana. Si prega di continuare a "
                          "farlo per rimanere in attività.",
                       nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit om actief te blijven."),
@@ -144,7 +145,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       en="Hello{}.I see you haven't allocated all credits for this week. Please do so in order "
                          "to meet your wekkly goal and stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch nicht alle Credits für diese Woche vergeben. Bitte "
-                         "hole das nach um dein wöchentliches Ziel zu erreichen und weiterhin aktiv zu bleiben.",
+                         "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto tutti i crediti per questa settimana. Continua a farlo "
                          "per raggiungere il tuo obiettivo settimanale e non perdere l'allenamento.",
                       nl="Hallo{}. Ik zie dat je deze week niet alle credits hebt toegewezen. Doe dit om je "
