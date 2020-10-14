@@ -146,7 +146,7 @@ with ruleset('user/activity/edit/request'):
             content_sub_screens = [("activity_days", "", ld.text_to_speech["days_edit"][c.m.language_code]),
                                    ("activity_duration", "", ld.text_to_speech["duration"][c.m.language_code])]
             topic = "eu/agewell/event/reasoner/user/activity/edit/response"
-            message_dict = jd.create_activity_types_edit_message(topic=topic, client_id=c.m.client_id,
+            message_dict = jd.create_activity_types_edit_response(topic=topic, client_id=c.m.client_id,
                                                                  days=days_activity, selected_days=selected_days,
                                                                  selected_duration=selected_duration,
                                                                  activity_id=type_id,
@@ -272,11 +272,13 @@ with ruleset('user/activity/message'):
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_morning,
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
-                                                 duration=int(c.m.selected_duration)).morning_notification()
+                                                 duration=int(c.m.selected_duration),
+                                                 weekday=day).morning_notification()
 
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
-                                                 activity_type=c.m.activity_id, task_id=task_id).evening_notification()
+                                                 activity_type=c.m.activity_id, task_id=task_id,
+                                                 weekday=day).evening_notification()
 
             except IndexError:
                 pass
@@ -876,12 +878,16 @@ with flowchart('notification/evening'):
             s.activity_type = c.m.activity_type
             s.language_code = c.m.language_code
             s.questions = []
-            sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
-                             f"({s.sid},'{s.client_id}','{datetime.now()}', 0)")
-            db.DbQuery(sql_statement, "insert").create_thread()
-
-
-        to('done')
+            sql_statement = f"SELECT activity_done FROM task WHERE task_id = {s.task_id}"
+            task_done=db.DbQuery(sql_statement, "query_one").create_thread()
+            if task_done is None:
+                s.task_done = 0
+                sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
+                                 f"({s.sid},'{s.client_id}','{datetime.now()}', 0)")
+                db.DbQuery(sql_statement, "insert").create_thread()
+            else:
+                s.task_done = 1
+        to("done")
 
     with stage('first_message'):
         @run
@@ -892,6 +898,7 @@ with flowchart('notification/evening'):
             s.activity_type = c.m.kwargs['activity_type']
             s.language_code = c.m.language_code
             s.questions = []
+            s.task_done = 0
             sql_statement = f"Select activity_name FROM activity_type WHERE type_id = {s.activity_type}"
             activity_name = db.DbQuery(sql_statement, "query_one").create_thread()
             activity_name = ld.activity_name[activity_name][c.m.language_code]
@@ -1010,6 +1017,7 @@ with flowchart('notification/evening'):
     with stage('send_message'):
         @run
         def send_message(c):
+            print("triggered")
             s.notification_name = "notification/evening"
             s.topic = "eu/agewell/event/reasoner/notification/message"
             message_dict = jd.create_notification_message(topic=s.topic, client_id=s.client_id, notification_id=s.sid,
@@ -1018,7 +1026,10 @@ with flowchart('notification/evening'):
                                                           notification_name=s.notification_name,
                                                           language=s.language_code)
             print(message_dict)
-            publish_message(s.client_id, s.topic, message_dict)
+            if s.task_done == 0:
+                publish_message(s.client_id, s.topic, message_dict)
+            else:
+                c.delete_state()
 
 
         to('done').when_all(m.button_type == 'ok')

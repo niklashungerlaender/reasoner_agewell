@@ -45,7 +45,8 @@ class CreateSchedulerJob:
         self.create_job()
 
     def create_job(self):
-        #self.date_for_scheduler = datetime.now() + timedelta(seconds=5)
+        print (self.scheduler_id)
+        #self.date_for_scheduler = datetime.now() + timedelta(seconds=10)
         scheduler.add_job(execute_scheduler_job_notification, trigger="date", run_date=self.date_for_scheduler,
                           args=self.arguments, kwargs=self.karguments, id=self.scheduler_id, replace_existing=True)
 
@@ -62,7 +63,7 @@ def execute_scheduler_job_notification(scheduler_event, client_id, scheduler_id=
     print (check_task)
     task_active = check_task[0][0]
     activity_done = check_task[0][1]
-    if task_active and activity_done is None:
+    if task_active and activity_done is None and kwargs["weekday"] == datetime.weekday(date.today()):
         notification_id = uuid.uuid1().int
         sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
                          f"({notification_id},'{client_id}','{datetime.now()}', 0)")

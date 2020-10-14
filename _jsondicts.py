@@ -44,7 +44,7 @@ def create_credits_information_response(topic="", client_id="", text="", languag
     return nd
 
 
-def create_activity_types_edit_message(topic="", activity_id="", client_id="", duration=[], selected_duration=[],
+def create_activity_types_edit_response(topic="", activity_id="", client_id="", duration=[], selected_duration=[],
                                        days=[], selected_days=[], language="", content_display_sub_screens=[]):
     try:
         content_sub_screens = [{"ID": i[0], "CONTENT_DISPLAY": hf.string_formatting(i[1]),
@@ -56,7 +56,8 @@ def create_activity_types_edit_message(topic="", activity_id="", client_id="", d
         nd["properties"]["LANGUAGE_CODE"] = language
         nd["properties"]["ACTIVITY_ID"] = activity_id
         nd["properties"]["DAYS"] = days
-        nd["properties"]["DURATION"] = duration
+        nd["properties"]["DURATION"] = [
+                {"VALUE":j, "CONTENT_DISPLAY": j + " " + ld.minutes[language]} for j in duration]
         nd["properties"]["SELECTED_DAYS"] = selected_days
         nd["properties"]["SELECTED_DURATION"] = selected_duration
         nd["properties"]["SUB_SCREENS"] = content_sub_screens
@@ -70,7 +71,8 @@ def create_activity_types_response(topic="", client_id="", types="",
                                   days="", language="", content_display_sub_screens = []):
     try:
         types_list = [
-            {"ID": i[0], "TITLE_DISPLAY": ld.activity_name[i[1]][language], "DAYS": days, "DURATION": i[2],
+            {"ID": i[0], "TITLE_DISPLAY": ld.activity_name[i[1]][language], "DAYS": days, "DURATION": [
+                {"VALUE":j, "CONTENT_DISPLAY": j + " " + ld.minutes[language]} for j in i[2]],
              "CONTENT_DISPLAY": i[3], "CONTENT_IMAGE": i[4]}
             for i in types
         ]
