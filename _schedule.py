@@ -45,8 +45,7 @@ class CreateSchedulerJob:
         self.create_job()
 
     def create_job(self):
-        print (self.scheduler_id)
-        #self.date_for_scheduler = datetime.now() + timedelta(seconds=10)
+        self.date_for_scheduler = datetime.now() + timedelta(seconds=10)
         scheduler.add_job(execute_scheduler_job_notification, trigger="date", run_date=self.date_for_scheduler,
                           args=self.arguments, kwargs=self.karguments, id=self.scheduler_id, replace_existing=True)
 
@@ -60,7 +59,6 @@ def execute_scheduler_job_notification(scheduler_event, client_id, scheduler_id=
         f"between s.start_date and s.end_date "
         f"and user_id = '{client_id}')) and start_daytime = '{date.today()}'")
     check_task = db.DbQuery(sql_statement, "query_all").create_thread()
-    print (check_task)
     task_active = check_task[0][0]
     activity_done = check_task[0][1]
     if task_active and activity_done is None and kwargs["weekday"] == datetime.weekday(date.today()):

@@ -245,6 +245,10 @@ with ruleset('user/activity/message'):
                                              "query_one").create_thread()
             reminder_id_evening = db.DbQuery(ss.query("get_evening_not_id", client_id=c.m.client_id),
                                              "query_one").create_thread()
+            if reminder_id_morning is None:
+                reminder_id_morning = 0
+            if reminder_id_evening is None:
+                reminder_id_evening = 0
             try:
                 test_if_emty = c.m.selected_days[0]
                 start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
@@ -268,12 +272,11 @@ with ruleset('user/activity/message'):
 
                     scheduler_id_morning = c.m.client_id + str(c.m.activity_id) + str(day) + "morning_notification"
                     scheduler_id_evening = c.m.client_id + str(c.m.activity_id) + str(day) + "evening_notification"
-
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_morning,
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration),
-                                                 weekday=day).morning_notification()
+                                                 weekday=day,task_id=task_id).morning_notification()
 
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
@@ -282,6 +285,7 @@ with ruleset('user/activity/message'):
 
             except IndexError:
                 pass
+
             if len(dates_for_tasks) > 1:
                 to_update = "update_task"
             elif len(dates_for_tasks) == 1:
@@ -352,7 +356,6 @@ with ruleset('user/activities/request'):
     def get_user_activities(c):
         try:
             active_goal = db.DbQuery(ss.query("get_goal_id", client_id=c.m.client_id), "query_one").create_thread()
-
             if not active_goal:
                 notification_id = str(uuid.uuid1().int)
                 run_time = datetime.now() + timedelta(days=6)
@@ -375,6 +378,7 @@ with ruleset('user/activities/request'):
             except:
                 allocated_mets = 0
                 left_mets = weekly_goal_mets
+
             done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
             done_mets = sum(i[0] * i[1] for i in done_mets)
             content_goalinfo = db.DbQuery(ss.query("get_goalinfo_content", language_code=c.m.language_code),
@@ -514,7 +518,7 @@ with ruleset('user/activities/request'):
             text_to_speech_sub = ld.text_to_speech["goal_info"][c.m.language_code]
             start_day = ld.weekDays[c.m.language_code][datetime.weekday(goal_start_date)]
             end_day = ld.weekDays[c.m.language_code][datetime.weekday(goal_end_date)]
-            days_left = (goal_end_date-datetime.today()).days
+            days_left = (goal_end_date-datetime.today()).days + 1
             title_display_sub = ld.title_goal_screen["personal_week"][c.m.language_code].format(start_day, end_day,
                                                                                                 days_left)
             topic = "eu/agewell/event/reasoner/user/activities/response"
@@ -727,9 +731,11 @@ with ruleset('notification/morning'):
     def get_last_session(c):
         try:
             sql_statement = (f"Select feedback FROM task WHERE activity_id IN (SELECT activity_id from "
-                             f"activity where user_id = '{s.client_id}') and start_daytime < CURRENT_TIMESTAMP "
-                             f"ORDER BY start_daytime DESC LIMIT 1")
+                             f"activity where user_id = '{s.client_id}' and type_id = {s.kwargs['activity_type']}) "
+                             f" and activity_id != {s.kwargs['task_id']} and start_daytime < CURRENT_TIMESTAMP "
+                             f" ORDER BY start_daytime DESC LIMIT 1")
             last_session_value = db.DbQuery(sql_statement, "query_one").create_thread()
+            print (last_session_value)
             if last_session_value is None:
                 last_session_value = "nan"
             c.post({"last_session": last_session_value})

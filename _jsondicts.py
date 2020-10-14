@@ -72,7 +72,7 @@ def create_activity_types_response(topic="", client_id="", types="",
     try:
         types_list = [
             {"ID": i[0], "TITLE_DISPLAY": ld.activity_name[i[1]][language], "DAYS": days, "DURATION": [
-                {"VALUE":j, "CONTENT_DISPLAY": j + " " + ld.minutes[language]} for j in i[2]],
+                {"VALUE":str(j), "CONTENT_DISPLAY": str(j) + " " + ld.minutes[language]} for j in i[2]],
              "CONTENT_DISPLAY": i[3], "CONTENT_IMAGE": i[4]}
             for i in types
         ]
