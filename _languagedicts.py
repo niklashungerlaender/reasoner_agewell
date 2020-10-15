@@ -151,7 +151,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       nl="Hallo{}. Ik zie dat je deze week niet alle credits hebt toegewezen. Doe dit om je "
                          "wekelijkse doel te bereiken en actief te blijven."),
                   "select_activity": dict(en="Please select a new physical activity for the upcoming week.",
-                                          de="Bitte wähle eine eine neue Aktivität für die kommende Woche aus.",
+                                          de="Bitte wähle eine neue Aktivität für die kommende Woche aus.",
                                           it="Seleziona un nuova attività fisica per la prossima settimana.",
                                           nl="Selecteer alstublieft een nieuwe beweegactiviteit voor de komende week."),
                   "days": dict(en="Please choose on which day(s) you want to exercise.",
