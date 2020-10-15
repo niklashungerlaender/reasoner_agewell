@@ -732,7 +732,7 @@ with ruleset('notification/morning'):
         try:
             sql_statement = (f"Select feedback FROM task WHERE activity_id IN (SELECT activity_id from "
                              f"activity where user_id = '{s.client_id}' and type_id = {s.kwargs['activity_type']}) "
-                             f" and activity_id != {s.kwargs['task_id']} and start_daytime < CURRENT_TIMESTAMP "
+                             f" and task_id != {s.kwargs['task_id']} and start_daytime < CURRENT_TIMESTAMP "
                              f" ORDER BY start_daytime DESC LIMIT 1")
             last_session_value = db.DbQuery(sql_statement, "query_one").create_thread()
             print (last_session_value)
