@@ -69,10 +69,10 @@ greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorn
                                    nl="Goede dag"),
              "evening": dict(en="Good evening", de="Guten Abend", it="Buona serata", nl="Goedenavond")
                  }
-title_goal_screen = {"weekly_credits": dict(en="Achieved: {} Credits\nAllocated: {} Credits\nGoal: {} Credits",
-                                            de="Erreicht: {} Credits\nZugewiesen: {} Credits\nZiel: {} Credits",
-                                            it="Raggiunti: {} Crediti\nAssegnati: {} Crediti\nObiettivo: {} Crediti",
-                                            nl="Behaald: {} Credits\nToegewezen: {} Credits\nDoel: {} Credits"),
+title_goal_screen = {"weekly_credits": dict(en="Allocated: {} Credits\nAchieved: {} Credits\nGoal: {} Credits",
+                                            de="Zugewiesen: {} Credits\nErreicht: {} Credits\nZiel: {} Credits",
+                                            it="Assegnati: {} Crediti\nRaggiunti: {} Crediti\nObiettivo: {} Crediti",
+                                            nl="Toegewezen: {} Credits\nBehaald: {} Credits\nDoel: {} Credits"),
                      "new_week": dict(en="Welcome to a new week!", de="Willkommen in einer neuen Woche!",
                                       it="Benvenuto {benvenuta} in una nuova settimana!",
                                       nl="Welkom in een nieuwe week!"),
