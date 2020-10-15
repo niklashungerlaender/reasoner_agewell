@@ -568,18 +568,18 @@ with flowchart("goal"):
             try:
                 s.client_id = c.m.client_id
                 notification_id = str(uuid.uuid1().int)
-                run_time = datetime.now() + timedelta(days=6)
-                run_time = run_time.replace(hour=23, minute=59, second=59)
-                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", id=notification_id + c.m.client_id,
-                                            run_date=run_time,
-                                            args=["goal", c.m.client_id])
+
                 sql_statement = (f"SELECT goal_id, met_required, end_date from goal where user_id = '{c.m.client_id}' "
                                  f"ORDER BY goal_id DESC LIMIT 1")
                 goal_vars = db.DbQuery(sql_statement, "query_all").create_thread()
                 goal_id = goal_vars[0][0]
                 goal_mets = goal_vars[0][1]
                 end_date = goal_vars[0][2]
-
+                run_time = end_date + timedelta(days=7)
+                run_time = run_time.replace(hour=23, minute=59, second=59)
+                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", id=notification_id + c.m.client_id,
+                                            run_date=run_time,
+                                            args=["goal", c.m.client_id])
                 sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
                                  f"ON s.type_id = activity.type_id JOIN task a ON a.activity_id = "
                                  f"activity.activity_id WHERE a.active='True' and a.activity_done='True'"
