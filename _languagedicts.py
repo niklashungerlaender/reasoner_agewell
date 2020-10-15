@@ -143,7 +143,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit om actief te blijven."),
                   "allocate_mets": dict(
                       en="Hello{}.I see you haven't allocated all credits for this week. Please do so in order "
-                         "to meet your wekkly goal and stay active.",
+                         "to meet your weekly goal and stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch nicht alle Credits für diese Woche vergeben. Bitte "
                          "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto tutti i crediti per questa settimana. Continua a farlo "
@@ -201,9 +201,9 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "genoeg tijd voor heeft. Als u er al een heeft uitgevoerd, kunt u dit aangeven door op de "
                          "knop 'Activiteit uitgevoerd' op het activiteitenscherm te drukken."),
                   "on_track": dict(
-                      en="Hello there{}. Seems you have a break day today. Still, you can revise your weekly plan"
-                         "or schedule an activity for today if you feel spontanous and fit. Otherwise "
-                         "relax you need to be fit for the upcoming days",
+                      en="Hello there{}. Seems you have a break day today. Still, you can revise your weekly plan "
+                         "or schedule an activity for today if you feel spontanous and fit. Otherwise, "
+                         "relax you need to be fit for the upcoming days.",
                       de="Hallo{}. Ich sehe du hast heute einen Pausentag. Trotzdem kannst du deinen Wochenplan überarbeiten "
                          "oder eine Aktivität für heute planen wenn du spontan bist und dich fit fühlst. Andernfalls "
                          "entspanne dich, du musst ausgeruht für die kommenden Tage sein.",
