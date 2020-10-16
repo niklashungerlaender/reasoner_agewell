@@ -612,7 +612,7 @@ with flowchart("goal"):
                         increase_decrease_mets = int((percentage_done_mets - 75) * 100 / math.log(goal_mets))
                         new_goal = goal_mets + increase_decrease_mets
                         increase_decrease = query_content[4][0]
-                    if percentage_done_mets < 70:
+                    else:  # if percentage_done_mets < 70:
                         increase_decrease_mets = int(goal_mets / 50 * (-0.333 * percentage_done_mets + 25))
                         new_goal = goal_mets - increase_decrease_mets
                         increase_decrease = query_content[5][0]
@@ -681,7 +681,7 @@ with flowchart("goal"):
                                                           notification_id=c.m.sid, questions=questions,
                                                           notification_name=s.notification_name)
             print(message_dict)
-            publish_message(s.client_id, s.topic, message_dict)
+            publish_message(c.m.client_id, s.topic, message_dict)
 
 
         to('update_goal').when_all(m.button_type == "ok")
@@ -700,7 +700,7 @@ with flowchart("goal"):
                         updated_goal_mets = s.new_goal_mets
 
                     sql_statement = (f"UPDATE goal SET met_required = {updated_goal_mets} "
-                                     f"WHERE user_id = '{s.client_id}' and CURRENT_TIMESTAMP between "
+                                     f"WHERE user_id = '{c.m.client_id}' and CURRENT_TIMESTAMP between "
                                      f"start_date and end_date")
                     print(sql_statement)
                     db.DbQuery(sql_statement, "insert").create_thread()
@@ -1049,10 +1049,10 @@ with flowchart('notification/evening'):
         @run
         def choose_followup_message(c):
             try:
-                message_type = {"easy": ["pos", "ia"],
+                message_type = {"easy": ["ia", ""],
                                 "like": ["pos", ""],
-                                "dislike": ["pos", "da"],
-                                "hard": ["neu", "da"],
+                                "dislike": ["da", ""],
+                                "hard": ["neu", ""],
                                 "time": ["neg", "stg"],
                                 "weather": ["neu", ""],
                                 "motivation": ["neg", "high"],
