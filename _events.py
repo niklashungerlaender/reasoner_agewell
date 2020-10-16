@@ -934,6 +934,10 @@ with flowchart('notification/evening'):
         @run
         def create_message(c):
             try:
+                try:
+                    s.client_id = c.m.client_id
+                except:
+                    pass
                 sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {s.task_id}"
                 db.DbQuery(sql_statement, "insert").create_thread()
                 sql_statement = f"Select content{s.language_code} FROM template WHERE daily = 'pos'"
@@ -956,6 +960,7 @@ with flowchart('notification/evening'):
     with stage('not_done'):
         @run
         def create_message(c):
+            s.client_id = c.m.client_id
             sql_statement = (f"Select content{s.language_code} FROM template JOIN "
                              """unnest('{notification_evening_notdone_title, 
                              notification_evening_notdone_content}'::TEXT[])
@@ -982,6 +987,7 @@ with flowchart('notification/evening'):
     with stage('postpone'):
         @run
         def get_feedback(c):
+            s.client_id = c.m.client_id
             scheduler_id_evening = s.client_id + str(s.activity_name_english) + str(datetime.weekday(date.today())) + \
                                    "evening_notification"
             date_for_scheduler = datetime.now() + timedelta(hours=randint(1, 2))
@@ -994,6 +1000,7 @@ with flowchart('notification/evening'):
     with stage('insert_difficulty'):
         @run
         def create_message(c):
+            s.client_id = c.m.client_id
             s.answer = c.m.button_type
             sql_statement = (f"UPDATE task set feedback = '{s.answer}' WHERE "
                              f" task_id = {s.task_id}")
@@ -1006,6 +1013,7 @@ with flowchart('notification/evening'):
     with stage('insert_reason'):
         @run
         def create_message(c):
+            s.client_id = c.m.client_id
             reasons = {"1": "hard",
                        "2": "time",
                        "3": "motivation",
