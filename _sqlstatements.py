@@ -3,7 +3,7 @@ from datetime import date
 
 def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
           nickname="", morning_not=0, evening_not=0, notification_name="", activity_id=0, purpose="",
-          duration=0, date_task=""):
+          duration=0, date_task="", gender=None):
     dic = dict(get_language=f"SELECT language from user_info WHERE user_id = '{client_id}'",
                update_language=f"UPDATE user_info SET language = '{language_code}' WHERE user_id = '{client_id}'",
                insert_clientid=f"INSERT INTO user_info(user_id) VALUES ('{client_id}') ON CONFLICT DO NOTHING",
@@ -27,11 +27,13 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                                                first_goal_text}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
                                                USING (purpose) ORDER  BY t.ord""",
                get_user_id=f"SELECT user_id from user_info WHERE user_id = '{client_id}'",
+               get_gender=f"SELECT gender from user_info WHERE user_id = '{client_id}'",
                update_user_info=f"UPDATE user_info SET age = {age}, "
                                 f"nickname = '{nickname}',"
                                 f"language = '{language_code}', "
                                 f"morning_reminder_id = '{morning_not}', "
-                                f"evening_reminder_id = '{evening_not}' "
+                                f"evening_reminder_id = '{evening_not}', "
+                                f"gender = '{gender}' "
                                 f"WHERE user_id = '{client_id}'",
                update_notification=f"SELECT id, next_run_time from apscheduler_jobs where id LIKE "
                                    f"'{client_id + '%' + notification_name}' ",
@@ -159,7 +161,37 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                                  f"m.user_id = '{client_id}' and m.goal_id = "
                                  f"(SELECT c.goal_id from goal c WHERE CURRENT_TIMESTAMP between c.start_date and "
                                  f"c.end_date and c.user_id = '{client_id}'))",
-               get_nickname= f"SELECT nickname from user_info WHERE user_id = '{client_id}'"
+               get_nickname= f"SELECT nickname from user_info WHERE user_id = '{client_id}'",
+               get_motivational_messages = [(
+                    f"SELECT m.content{language_code}, m.template_id from template m where "
+                    f"m.daily = '{purpose}' "
+                    f"and NOT EXISTS(SELECT FROM message a WHERE m.template_id = a.template_id AND "
+                    f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and "
+                    f"s.user_id = '{client_id}'))"),
+                    (
+                        f"SELECT template.content{language_code}, template.template_id FROM message INNER JOIN "
+                        f"template ON message.template_id = "
+                        f"template.template_id INNER JOIN notification ON notification.notification_id = "
+                        f"message.notification_id WHERE notification.user_id = '{client_id}' and notification"
+                        f".rating = 1"),
+                    (
+                        f"select content{language_code}, template_id from template where daily = "
+                        f"'{purpose}'")],
+               get_motivational_messages_alternative = [(
+                        f"SELECT m.content{language_code}, m.template_id from template m where m.daily = "
+                        f"'{purpose}' "
+                        f"and NOT EXISTS(SELECT FROM message a WHERE m.template_id = a.template_id AND "
+                        f"EXISTS(SELECT from notification s WHERE a.notification_id = s.notification_id and "
+                        f"s.user_id = '{client_id}'))"),
+                        (
+                            f"SELECT template.content{language_code}, template.template_id FROM message INNER JOIN "
+                            f"template ON message.template_id = "
+                            f"template.template_id INNER JOIN notification ON notification.notification_id = "
+                            f"message.notification_id WHERE notification.user_id = '{client_id}' and notification"
+                            f".rating = 1"),
+                        (
+                            f"select content{language_code}, template_id from template where daily = "
+                            f"'{purpose}'")]
 
                )
 
