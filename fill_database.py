@@ -168,7 +168,7 @@ def insert_activities(connection, cursor):
 
 
 def insert_templates(connection, cursor):
-        with open('motivational_messages.csv', 'r', encoding="Latin-1") as f:
+        with open('motivational_messages.csv', 'r', encoding="utf-8") as f:
             next(f) # Skip the header row.
             cursor.copy_from(f, 'template', sep=';')
         connection.commit()
