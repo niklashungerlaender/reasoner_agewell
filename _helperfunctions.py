@@ -5,6 +5,26 @@ import re
 import pyphen
 
 
+class StoreInput:
+    notification_dict = dict()
+
+    def __init__(self, notification_id, name=None, value=None):
+        self.notification_id = str(notification_id)
+        self.name = name
+        self.value = value
+
+    def add_value(self):
+        if self.notification_id not in self.notification_dict.keys():
+            self.notification_dict[self.notification_id] = {}
+        self.notification_dict[self.notification_id][self.name] = self.value
+
+    def get_value(self):
+        return self.notification_dict[self.notification_id][self.name]
+
+    def delete_entry(self):
+        del self.notification_dict[self.notification_id]
+
+
 def get_hyphenation(text, language):
     dic = pyphen.Pyphen(lang=language)
     hyphenated = dic.inserted(text)
