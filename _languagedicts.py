@@ -61,7 +61,7 @@ content_title = {"bullet point": dict(en="Tip", de="Tipp", it="Mancia", nl="Tip"
                  "description": dict(en="Description", de="Beschreibung", it="Descrizione", nl="Omschrijving"),
                  "advantage": dict(en="Advantage", de="Vorteil", it="Vantaggio", nl="Voordeel"),
                  "warning": dict(en="Warning", de="Warnung", it="Avvertimento", nl="Waarschuwing"),
-                 "contraindication": dict(en="Warning", de="Kontraindikation", it="Controindicazione",
+                 "contraindication": dict(en="Contraindication", de="Kontraindikation", it="Controindicazione",
                                           nl="Contra-indicatie")}
 
 greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorno", nl="Goedemorgen"),
@@ -69,12 +69,17 @@ greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorn
                                    nl="Goede dag"),
              "evening": dict(en="Good evening", de="Guten Abend", it="Buona serata", nl="Goedenavond")
                  }
+
+italian_gender = {"new_week": dict(male="Benvenuto", female="Benvenuta"),
+                  "activity_missed": dict(male="riuscito", female="riuscita")
+                  }
+
 title_goal_screen = {"weekly_credits": dict(en="Allocated: {} Credits\nAchieved: {} Credits\nGoal: {} Credits",
                                             de="Zugewiesen: {} Credits\nErreicht: {} Credits\nZiel: {} Credits",
                                             it="Assegnati: {} Crediti\nRaggiunti: {} Crediti\nObiettivo: {} Crediti",
                                             nl="Toegewezen: {} Credits\nBehaald: {} Credits\nDoel: {} Credits"),
                      "new_week": dict(en="Welcome to a new week!", de="Willkommen in einer neuen Woche!",
-                                      it="Benvenuto {benvenuta} in una nuova settimana!",
+                                      it="{} in una nuova settimana!",
                                       nl="Welkom in een nieuwe week!"),
                      "allocate_credits": dict(en="Unassigned credits: ", de="Nicht vergebene Credits: ",
                                               it="Crediti non assegnati: ",
@@ -116,7 +121,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       de="Du kannst alle Tage an denen du die Aktivität eingetragen aber nicht "
                          "gemacht hast, löschen, indem du auf den Knopf 'Aktivität entfernen' klickst.",
                       it="Puoi eliminare tutti i giorni in cui hai pianificato l'attività senza completarla, "
-                         "premendo il pulsante 'Elimina attività'.",
+                         "premendo il pulsante 'Elimina attività.",
                       nl="U kunt alle dagen verwijderen waarop u de activiteit heeft gepland maar niet uitgevoerd "
                          "door op de knop 'Activiteit verwijderen' te drukken."),
                   "new_week": dict(
@@ -142,7 +147,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "farlo per rimanere in attività.",
                       nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit om actief te blijven."),
                   "allocate_mets": dict(
-                      en="Hello{}.I see you haven't allocated all credits for this week. Please do so in order "
+                      en="Hello{}. I see you haven't allocated all credits for this week. Please do so in order "
                          "to meet your weekly goal and stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch nicht alle Credits für diese Woche vergeben. Bitte "
                          "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
@@ -223,7 +228,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "zurückzugewinnen. Diese können "
                          "für neue Aktivitäten verwendet werden. Damit stellst du sicher, dass du dein  "
                          "wöchentliches Ziel erreichst.",
-                      it="Piacere di rivederti{}!. Noto che negli ultimi giorni non sei riuscito {riuscita} a "
+                      it="Piacere di rivederti{}!. Noto che negli ultimi giorni non sei {} a "
                          "svolgere alcune attività. Sarebbe meglio eliminarle dalla schermata per recuperare i "
                          "crediti che potrai utilizzare per nuove attività. Così ti assicuri di raggiungere il tuo "
                          "obiettivo settimanale.",
