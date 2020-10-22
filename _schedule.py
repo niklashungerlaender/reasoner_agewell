@@ -22,7 +22,7 @@ scheduler = BackgroundScheduler(jobstores=jobstores)
 
 
 class CreateSchedulerJob:
-    def __init__(self, runtime, user_id, reminder_id=None, scheduler_id=None, postpone_time = None, **kwargs):
+    def __init__(self, runtime, user_id, reminder_id=None, scheduler_id=None, postpone_time=None, **kwargs):
         self.runtime = runtime
         self.scheduler_id = scheduler_id
         self.user_id = user_id
@@ -45,7 +45,7 @@ class CreateSchedulerJob:
         self.create_job()
 
     def create_job(self):
-        #self.date_for_scheduler = datetime.now() + timedelta(seconds=10)
+        #self.date_for_scheduler = datetime.now() + timedelta(seconds=3)
         scheduler.add_job(execute_scheduler_job_notification, trigger="date", run_date=self.date_for_scheduler,
                           args=self.arguments, kwargs=self.karguments, id=self.scheduler_id, replace_existing=True)
 
