@@ -22,6 +22,7 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                            f"{int(duration)}, '{date_task}', True  ON CONFLICT ON CONSTRAINT "
                            f"task_activity_id_start_daytime_key DO UPDATE SET active='True', duration= "
                            f"{int(duration)} RETURNING task_id",
+               get_number_of_weeks = f"select count(goal_id) from goal where user_id = '{client_id}'",
                get_firstgoal_content=f"Select content{language_code} FROM template JOIN "
                                      """unnest('{first_goal_title, 
                                                first_goal_text}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
@@ -66,6 +67,14 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                                            f"INNER JOIN task a ON a.activity_id = b.activity_id "
                                            f"WHERE a.active = 'True' and "
                                            f"a.activity_done IS NULL and a.start_daytime = CURRENT_DATE and "
+                                           f"b.goal_id = ( "
+                                           f"SELECT m.goal_id from goal m where CURRENT_TIMESTAMP between m.start_date "
+                                           f"and m.end_date and m.user_id = '{client_id}')",
+               get_activities_done_today=f"SELECT s.activity_name FROM activity_type s INNER JOIN activity b ON "
+                                           f"s.type_id = b.type_id "
+                                           f"INNER JOIN task a ON a.activity_id = b.activity_id "
+                                           f"WHERE a.active = 'True' and "
+                                           f"a.activity_done IS True and a.start_daytime = CURRENT_DATE and "
                                            f"b.goal_id = ( "
                                            f"SELECT m.goal_id from goal m where CURRENT_TIMESTAMP between m.start_date "
                                            f"and m.end_date and m.user_id = '{client_id}')",
@@ -126,14 +135,16 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                            f"between s.start_date and s.end_date "
                            f"and user_id = '{client_id}')) and activity_done IS NULL "
                            f"and start_daytime NOT IN {tuple(date_task)}",
-               update_task_ifone=f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from activity where "
+               update_task_ifone=f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from "
+                                 f"activity where "
                                  f"user_id = '{client_id}' "
                                  f"and type_id = {activity_id} and goal_id = (SELECT s.goal_id from goal s where "
                                  f"CURRENT_TIMESTAMP "
                                  f"between s.start_date and s.end_date "
                                  f"and user_id = '{client_id}')) and activity_done IS NULL "
                                  f"and start_daytime NOT IN ('{date_task}')",
-               update_task_ifzero=f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from activity where "
+               update_task_ifzero=f"UPDATE task SET active = False WHERE activity_id = (SELECT activity_id from "
+                                  f"activity where "
                                   f"user_id = '{client_id}' "
                                   f"and type_id = {activity_id} and goal_id = (SELECT s.goal_id from goal s where "
                                   f"CURRENT_TIMESTAMP "
@@ -161,6 +172,11 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                                  f"m.user_id = '{client_id}' and m.goal_id = "
                                  f"(SELECT c.goal_id from goal c WHERE CURRENT_TIMESTAMP between c.start_date and "
                                  f"c.end_date and c.user_id = '{client_id}'))",
+               delete_missed_days=f"UPDATE task SET active = False WHERE activity_id IN (SELECT activity_id from "
+                                  f"activity where "
+                                  f"user_id = '{client_id}' and goal_id = (SELECT s.goal_id from goal s where "
+                                  f"CURRENT_TIMESTAMP between s.start_date and s.end_date and user_id = "
+                                  f"'{client_id}')) and activity_done IS NULL and start_daytime < current_date",
                get_nickname= f"SELECT nickname from user_info WHERE user_id = '{client_id}'",
                get_motivational_messages = [(
                     f"SELECT m.content{language_code}, m.template_id from template m where "

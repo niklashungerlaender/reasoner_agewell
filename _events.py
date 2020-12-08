@@ -10,6 +10,7 @@ import _languagedicts as ld
 from random import randint
 import _sqlstatements as ss
 import math
+import numpy as np
 
 
 # schedules notifications for weekly goals from ruleset firstgoal/intern and flowchart goal
@@ -278,8 +279,8 @@ with ruleset('user/activity/message'):
                                                  scheduler_id=scheduler_id_morning,
                                                  activity_type=c.m.activity_id,
                                                  duration=int(c.m.selected_duration),
-                                                 weekday=day,task_id=task_id).morning_notification()
-                    
+                                                 weekday=day, task_id=task_id).morning_notification()
+
                     _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id, reminder_id=reminder_id_evening,
                                                  scheduler_id=scheduler_id_evening,
                                                  activity_type=c.m.activity_id, task_id=task_id,
@@ -339,7 +340,6 @@ with ruleset('dimension/request'):
 
             topic = "eu/agewell/event/reasoner/dimension/response"
             title = content[0][0]
-            # todo: should be queried in different languages
             title_short = "Physical"
             text = dashboard_motivation + dashboard_content
             message_dict = jd.create_dimension_notification(topic=topic, client_id=c.m.client_id,
@@ -357,6 +357,7 @@ with ruleset('user/activities/request'):
     def get_user_activities(c):
         try:
             active_goal = db.DbQuery(ss.query("get_goal_id", client_id=c.m.client_id), "query_one").create_thread()
+            #checks if there is a goal, if not one is created with 1000 credits
             if not active_goal:
                 notification_id = str(uuid.uuid1().int)
                 run_time = datetime.now() + timedelta(days=6)
@@ -367,12 +368,28 @@ with ruleset('user/activities/request'):
                                             trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
 
+            #query variables
             weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
                                           "query_one").create_thread()
-            if weekly_goal_mets == None:
-                weekly_goal_mets = 0
             allocated_mets = db.DbQuery(ss.query("get_selected_mets", client_id=c.m.client_id),
                                         "query_all").create_thread()
+            done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
+            content_goalinfo = db.DbQuery(ss.query("get_goalinfo_content", language_code=c.m.language_code),
+                                          "query_all").create_thread()
+            activity_infos = db.DbQuery(ss.query("get_activity_infos", client_id=c.m.client_id),
+                                        "query_all").create_thread()
+            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
+            goal_start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
+                                         "query_one").create_thread()
+            goal_end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id),
+                                       "query_one").create_thread()
+            number_of_weeks_participating = db.DbQuery(ss.query("get_number_of_weeks", client_id=c.m.client_id),
+                                                       "query_one").create_thread()
+            gender = db.DbQuery(ss.query("get_gender", client_id=c.m.client_id), "query_one").create_thread()
+
+            #compute queried variables
+            if weekly_goal_mets == None:
+                weekly_goal_mets = 0
             try:
                 allocated_mets = sum(i[0] * i[1] for i in allocated_mets)
                 left_mets = weekly_goal_mets - allocated_mets
@@ -380,10 +397,8 @@ with ruleset('user/activities/request'):
                 allocated_mets = 0
                 left_mets = weekly_goal_mets
 
-            done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
             done_mets = sum(i[0] * i[1] for i in done_mets)
-            content_goalinfo = db.DbQuery(ss.query("get_goalinfo_content", language_code=c.m.language_code),
-                                          "query_all").create_thread()
+
             goalinfo_info = content_goalinfo[0][0].format(weekly_goal_mets)
             goalinfo_achieved = content_goalinfo[1][0].format(allocated_mets)
             if left_mets > 0:
@@ -394,18 +409,24 @@ with ruleset('user/activities/request'):
             goalinfo_activities = content_goalinfo[3][0]
             goalinfo_1 = goalinfo_info + goalinfo_achieved + goalinfo_remaining + goalinfo_activities
 
-            activity_infos = db.DbQuery(ss.query("get_activity_infos", client_id=c.m.client_id),
-                                        "query_all").create_thread()
-
             try:
                 activity_active_today = db.DbQuery(ss.query("get_activities_active_today", client_id=c.m.client_id),
                                                    "query_all").create_thread()
                 activity_active_today = [var for tup in activity_active_today for var in tup]
             except:
                 activity_active_today = []
+            try:
+                activity_done_today = db.DbQuery(ss.query("get_activities_done_today", client_id=c.m.client_id),
+                                                   "query_all").create_thread()
+            except:
+                activity_done_today = []
             activity_missed = db.DbQuery(ss.query("get_missed_days", client_id=c.m.client_id),
                                          "query_all").create_thread()
             activity_missed = [var for tup in activity_missed for var in tup]
+            if len(activity_missed) > 0:
+                post("activity/missed", {"client_id":c.m.client_id, "language_code":c.m.language_code, "nickname":nickname})
+                db.DbQuery(ss.query("delete_missed_days", client_id=c.m.client_id),
+                                                 "insert").create_thread()
             activity_infos = [
                 {"activity_name": ld.activity_name[i[0]][c.m.language_code],
                  "days": [ld.weekDays[c.m.language_code][j.weekday()] for j in i[1]], "activity_duration": i[2],
@@ -441,7 +462,6 @@ with ruleset('user/activities/request'):
                     f"FROM template WHERE activity IN {activities} GROUP BY activity ")
 
                 activity_content = db.DbQuery(sql_statement, "query_all").create_thread()
-            print (activity_content)
             activity_list = []
             for h, i in enumerate(activity_infos):
                 # i["days"].reverse()
@@ -461,17 +481,16 @@ with ruleset('user/activities/request'):
                 index_for_activity = [x for x, y in enumerate(activity_content) if
                                       y[0] == i["activity_name_english"]][0]
                 random_content = randint(0, len(activity_content[index_for_activity][2]) - 1)
-                print (random_content)
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
                                      "CREDIT_DONE": i["activity_duration"] * i["met_value"] * i["activities_done"],
                                      "CONTENT_DISPLAY": (': '.join(
                                          ("**" +
-                                             ld.content_title[
-                                                 activity_content[index_for_activity][2]
-                                                 [random_content]][c.m.language_code] + "**",
-                                             activity_content[index_for_activity][1]
-                                             [random_content]))),
+                                          ld.content_title[
+                                              activity_content[index_for_activity][2]
+                                              [random_content]][c.m.language_code] + "**",
+                                          activity_content[index_for_activity][1]
+                                          [random_content]))),
                                      "CONTENT_TEXT_TO_SPEECH": i["text_to_speech"],
                                      "CONTENT_IMAGE": i["url"],
                                      "ACTIVE_TODAY": i["active_today"],
@@ -479,23 +498,21 @@ with ruleset('user/activities/request'):
                                      }
                 activity_list.append(dict_for_activity)
 
-            goal_start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
-                                         "query_one").create_thread()
-            goal_end_date = db.DbQuery(ss.query("get_goal_enddate", client_id=c.m.client_id),
-                                       "query_one").create_thread()
 
-            nickname = db.DbQuery(ss.query("get_nickname", client_id=c.m.client_id), "query_one").create_thread()
-            gender = db.DbQuery(ss.query("get_gender", client_id=c.m.client_id), "query_one").create_thread()
-            if gender is None or gender == "" or gender == "MALE":
-                gender = "male"
-            else:
+            if gender is "FEMALE":
                 gender = "female"
+            else:
+                gender = "male"
             if nickname:
                 nickname = " " + nickname
             else:
                 nickname = ""
-            print(activity_active_today)
-            if allocated_mets == 0 and goal_start_date.date() == date.today():
+
+            if allocated_mets == 0 and number_of_weeks_participating == 1:
+                text_to_speech_main = ld.text_to_speech["first_week"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["first_week"][c.m.language_code].format(
+                    ld.italian_gender["new_week"][gender])
+            elif allocated_mets == 0 and goal_start_date.date() == date.today():
                 text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname)
                 title_display = ld.title_goal_screen["new_week"][c.m.language_code].format(
                     ld.italian_gender["new_week"][gender])
@@ -514,15 +531,14 @@ with ruleset('user/activities/request'):
                 title_display = ld.title_goal_screen["activity_today_multiple"][c.m.language_code] \
                                 + ", ".join(
                     list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_active_today)))
-            elif len(activity_missed) > 0:
-                text_to_speech_main = ld.text_to_speech["activity_missed"][c.m.language_code].format(nickname,
-                                                                                                     ld.italian_gender[
-                                                                                                         "activity_missed"][
-                                                                                                         gender])
-                title_display = ld.title_goal_screen["activity_missed"][c.m.language_code] + ", ".join(
-                    list(map(lambda x: ld.activity_name[x][c.m.language_code], activity_missed)))
-            else:
+
+            elif len(activity_done_today) > 0:
                 text_to_speech_main = ld.text_to_speech["on_track"][c.m.language_code].format(nickname)
+                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(done_mets,
+                                                                                                 allocated_mets,
+                                                                                                 weekly_goal_mets)
+            else:
+                text_to_speech_main = ld.text_to_speech["day_off"][c.m.language_code].format(nickname)
                 title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(done_mets,
                                                                                                  allocated_mets,
                                                                                                  weekly_goal_mets)
@@ -545,8 +561,45 @@ with ruleset('user/activities/request'):
                                                             title_display_sub=title_display_sub)
 
             publish_message(c.m.client_id, topic, message_dict)
-        except Exception  as e:
+        except Exception as e:
             print(e)
+
+with ruleset('user/dashboard/request'):
+    @when_all(+m.client_id)
+    def create_dashboard_response(c):
+        try:
+            chart_type = "COMBINED"
+            title_display = ld.activity_name["activity"][c.m.language_code]
+            legend = [ld.dashboard["achieved"][c.m.language_code],ld.dashboard["goal"][c.m.language_code]]
+            sql_statement = f"SELECT count(goal_id) from goal WHERE user_id = '{c.m.client_id}'"
+            number_of_weeks = db.DbQuery(sql_statement, "query_one").create_thread()
+            number_of_weeks = max(0, number_of_weeks-5)
+            sql_statement = (f"SELECT achieved, met_required from goal where user_id = '{c.m.client_id}' "
+                             f"ORDER BY goal_id DESC LIMIT 5")
+            goal_vars = db.DbQuery(sql_statement, "query_all").create_thread()
+            goal_vars = [list(ele) for ele in goal_vars]
+            goal_vars.reverse()
+            done_mets = db.DbQuery(ss.query("get_done_mets", client_id=c.m.client_id), "query_all").create_thread()
+            done_mets = sum(i[0] * i[1] for i in done_mets)
+            data = []
+            for i, j in enumerate(goal_vars):
+                x = {"X": ld.dashboard["week"][c.m.language_code] + " " + str(i + 1 + number_of_weeks),
+                     "Y": [0 if v is None else v for v in j]}
+                data.append(x)
+            data[-1]["Y"][0] = done_mets
+            #get plot description (ruleset at end of script)
+            post('dashboard', {'sid': c.m.client_id, 'input': list(data[i]["Y"] for i in range(len(data))), 'language': c.m.language_code})
+            content_display = hf.StoreInput(c.m.client_id, "dashboard").get_value()
+            hf.StoreInput(c.m.client_id, "dashboard").delete_entry()
+
+            topic = "eu/agewell/event/reasoner/user/dashboard/response"
+            message_dict = jd.create_dashboard_response(topic=topic, client_id=c.m.client_id,
+                                                        language=c.m.language_code,
+                                                        type=chart_type, content_display=content_display,
+                                                        title_display=title_display, legend=legend, data=data)
+            publish_message(c.m.client_id, topic, message_dict)
+        except Exception as e:
+            print (e)
 
 with ruleset('delete/user'):
     @when_all(+m.client_id)
@@ -596,8 +649,8 @@ with flowchart("goal"):
                                  f"and a.activity_id IN (SELECT m.activity_id from activity m WHERE "
                                  f"m.goal_id = {goal_id})")
                 done_mets = db.DbQuery(sql_statement, "query_all").create_thread()
+                done_mets = sum(i[0] * i[1] for i in done_mets)
                 try:
-                    done_mets = sum(i[0] * i[1] for i in done_mets)
                     percentage_done_mets = int(done_mets * 100 / goal_mets)
                 except Exception as e:
                     print(e)
@@ -633,9 +686,9 @@ with flowchart("goal"):
 
                 hf.StoreInput(c.m.sid, "new_weekly_goal", new_goal).add_value()
 
-                sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
+                sql_statement = (f"INSERT INTO goal(user_id, start_date, end_date, met_required, achieved) VALUES "
                                  f"('{c.m.client_id}','{end_date + timedelta(seconds=1)}' "
-                                 f",'{run_time}', {new_goal})")
+                                 f",'{run_time}', {new_goal}, {done_mets})")
                 db.DbQuery(sql_statement, "insert").create_thread()
 
                 button_left = hf.create_buttons_dict(button_type="edit", content="edit",
@@ -694,7 +747,7 @@ with flowchart("goal"):
                 print(message_dict)
                 publish_message(c.m.client_id, s.topic, message_dict)
             except Exception as e:
-                print (e)
+                print(e)
 
 
         to('update_goal').when_all(m.button_type == "ok")
@@ -883,7 +936,7 @@ with ruleset('notification/morning'):
                                          scheduler_id=scheduler_id_morning,
                                          activity_type=s.kwargs['activity_type'], postpone_time="notification/morning",
                                          duration=int(s.kwargs["duration"]),
-                                         weekday = datetime.weekday(date.today())).postpone()
+                                         weekday=datetime.weekday(date.today())).postpone()
             c.delete_state()
         except Exception as e:
             print(e)
@@ -897,40 +950,20 @@ with flowchart('notification/evening'):
         @run
         def define_variables(c):
             try:
+                s.topic = "eu/agewell/event/reasoner/notification/message"
+                s.notification_name = "notification/evening"
                 hf.StoreInput(c.m.sid, "task_id", c.m.task_id).add_value()
                 hf.StoreInput(c.m.sid, "activity_type", c.m.activity_type).add_value()
+                hf.StoreInput(c.m.sid, "client_id", c.m.client_id).add_value()
+                hf.StoreInput(c.m.sid, "language_code", c.m.language_code).add_value()
                 sql_statement = (f"INSERT INTO notification(notification_id, user_id, timestamp, rating) VALUES "
                                  f"({c.m.sid},'{c.m.client_id}','{datetime.now()}', 0)")
                 db.DbQuery(sql_statement, "insert").create_thread()
-                sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {c.m.task_id}"
-                db.DbQuery(sql_statement, "insert").create_thread()
-                sql_statement = f"Select content{c.m.language_code} FROM template WHERE daily = 'pos'"
-                title = db.DbQuery(sql_statement, "query_one").create_thread()
-                sql_statement = (
-                    f"Select content{c.m.language_code} FROM template WHERE purpose = 'notification_evening_done'")
-                content = db.DbQuery(sql_statement, "query_one").create_thread()
-                button_left = hf.create_buttons_dict(button_type="dislike", content="hard",
-                                                     language_code=c.m.language_code)
-                button_middle = hf.create_buttons_dict(button_type="like", content="right",
-                                                       language_code=c.m.language_code)
-                button_right = hf.create_buttons_dict(button_type="easy", content="easy",
-                                                      language_code=c.m.language_code)
-                buttons = [button_right, button_left, button_middle]
-                s.notification_name = "notification/evening"
-                s.topic = "eu/agewell/event/reasoner/notification/message"
-                message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
-                                                              notification_id=c.m.sid,
-                                                              title=title, content=content,
-                                                              buttons=buttons,
-                                                              notification_name=s.notification_name,
-                                                              language=c.m.language_code)
-                publish_message(c.m.client_id, s.topic, message_dict)
+                post('notification/evening', {"sid": c.m.sid, "to_ask_time": "ok"})
             except Exception as e:
-                print(e)
+                print (e)
 
-
-        to('insert_difficulty').when_all(
-            (m.button_type == 'easy') | (m.button_type == 'like') | (m.button_type == 'dislike'))
+        to('ask_time').when_all(m.to_ask_time == 'ok')
 
     with stage('first_message'):
         @run
@@ -938,6 +971,8 @@ with flowchart('notification/evening'):
             try:
                 hf.StoreInput(c.m.sid, "task_id", c.m.kwargs['task_id']).add_value()
                 hf.StoreInput(c.m.sid, "activity_type", c.m.kwargs['activity_type']).add_value()
+                hf.StoreInput(c.m.sid, "client_id", c.m.client_id).add_value()
+                hf.StoreInput(c.m.sid, "language_code", c.m.language_code).add_value()
                 sql_statement = f"Select activity_name FROM activity_type WHERE type_id = {c.m.kwargs['activity_type']}"
                 activity_name = db.DbQuery(sql_statement, "query_one").create_thread()
                 activity_name = ld.activity_name[activity_name][c.m.language_code]
@@ -974,15 +1009,76 @@ with flowchart('notification/evening'):
                 print(e)
 
 
-        to('done').when_all(m.button_type == 'ok')
+        to('ask_time').when_all(m.button_type == 'ok')
         to('not_done').when_all(m.button_type == 'cancel')
         to('postpone').when_all(m.button_type == 'postpone')
+
+    with stage('ask_time'):
+        @run
+        def create_message(c):
+            try:
+                task_id = hf.StoreInput(c.m.sid, "task_id").get_value()
+                client_id = hf.StoreInput(c.m.sid, "client_id").get_value()
+                language_code = hf.StoreInput(c.m.sid, "language_code", c.m.language_code).get_value()
+                sql_statement = f"SELECT duration from task WHERE task_id = {task_id}"
+                duration = db.DbQuery(sql_statement, "query_one").create_thread()
+                title = ld.activity_done["ask_time_title"][language_code].format(duration)
+                content = ld.activity_done["ask_time_content"][language_code]
+                button_left = hf.create_buttons_dict(button_type="edit", content="edit",
+                                                     language_code=language_code)
+                button_right = hf.create_buttons_dict(button_type="ok", content="yes",
+                                                      language_code=language_code)
+                buttons = [button_right, button_left]
+                message_dict = jd.create_notification_message(topic=s.topic, client_id=client_id,
+                                                              notification_id=c.m.sid,
+                                                              title=title, content=content,
+                                                              buttons=buttons,
+                                                              notification_name=s.notification_name,
+                                                              language=language_code)
+                publish_message(client_id, s.topic, message_dict)
+            except Exception as e:
+                print (e)
+
+        to('done').when_all(m.button_type == 'ok')
+        to('set_time').when_all(m.button_type == 'edit')
+
+    with stage('set_time'):
+        @run
+        def create_message(c):
+            try:
+                item_list = [hf.create_items_dict(content_display=ld.minutes[c.m.language_code],
+                                                  item_type="single_select", item_id=1,
+                                                  options=[str(i) for i in range(10, 130, 10)])]
+                questions = hf.create_question_dict(content_display=[""], items=[item_list])
+                questionnaire_type = "time"
+                button_right = hf.create_buttons_dict(button_type="ok", content="ok",
+                                                      language_code=c.m.language_code)
+                buttons = [button_right]
+                title = ld.activity_done["set_time_title"][c.m.language_code]
+                content = ""
+                message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
+                                                              notification_id=c.m.sid,
+                                                              title=title, content=content,
+                                                              buttons=buttons, questions=questions,
+                                                              questionnaire_type=questionnaire_type,
+                                                              notification_name=s.notification_name,
+                                                              language=c.m.language_code)
+                publish_message(c.m.client_id, s.topic, message_dict)
+            except Exception as e:
+                print (e)
+        to('done').when_all(m.button_type == 'ok')
 
     with stage('done'):
         @run
         def create_message(c):
             try:
                 task_id = hf.StoreInput(c.m.sid, "task_id").get_value()
+                try:
+                    manual_time = int(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0]) * 10
+                    sql_statement = f"UPDATE task SET duration={manual_time} WHERE task_id = {task_id}"
+                    db.DbQuery(sql_statement, "insert").create_thread()
+                except Exception as e:
+                    print (e)
                 sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {task_id}"
                 db.DbQuery(sql_statement, "insert").create_thread()
                 sql_statement = f"Select content{c.m.language_code} FROM template WHERE daily = 'pos'"
@@ -1056,7 +1152,8 @@ with flowchart('notification/evening'):
             _schedule.CreateSchedulerJob(date_for_scheduler, c.m.client_id,
                                          scheduler_id=scheduler_id_evening,
                                          activity_type=activity_type, task_id=task_id,
-                                         postpone_time="notification/evening", weekday=datetime.weekday(date.today())).postpone()
+                                         postpone_time="notification/evening",
+                                         weekday=datetime.weekday(date.today())).postpone()
             hf.StoreInput(c.m.sid).delete_entry()
             c.delete_state()
 
@@ -1073,7 +1170,7 @@ with flowchart('notification/evening'):
                                 "dislike": ["da", ""]}
                 purpose = message_type[c.m.button_type]
                 sql_queries = ss.query("get_motivational_messages", language_code=c.m.language_code,
-                                                  purpose=purpose[0], client_id=c.m.client_id)
+                                       purpose=purpose[0], client_id=c.m.client_id)
                 content = db.ChooseMessage(sql_queries, c.m.sid, c.m.client_id).choose_right_message()
                 button_left = hf.create_buttons_dict(button_type="cancel", content="ignore",
                                                      language_code=c.m.language_code)
@@ -1120,7 +1217,7 @@ with flowchart('notification/evening'):
                 print("test")
                 if purpose[1] != "":
                     sql_queries = ss.query("get_motivational_messages_alternative", language_code=c.m.language_code,
-                                 purpose=purpose[1], client_id=c.m.client_id)
+                                           purpose=purpose[1], client_id=c.m.client_id)
                     content_second = db.ChooseMessage(sql_queries, c.m.sid, c.m.client_id).choose_right_message()
                 else:
                     content_second = ""
@@ -1185,11 +1282,12 @@ with flowchart('ipaq/questionnaire'):
                                                   options=[str(i) for i in range(10, 100, 10)])]
                 questions = hf.create_question_dict(content_display=[""], items=[item_list])
                 buttons = [hf.create_buttons_dict(button_type="next", content="next", wait=True,
-                                                    language_code=c.m.language_code)]
+                                                  language_code=c.m.language_code)]
                 s.questionnaire_type = "ipaq"
                 s.topic = "eu/agewell/event/reasoner/notification/message"
                 s.notification_name = "ipaq/questionnaire"
-                message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id, notification_id=c.m.sid,
+                message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
+                                                              notification_id=c.m.sid,
                                                               title=title, content=content, questions=questions,
                                                               questionnaire_type=s.questionnaire_type,
                                                               buttons=buttons,
@@ -1198,6 +1296,8 @@ with flowchart('ipaq/questionnaire'):
                 publish_message(c.m.client_id, s.topic, message_dict)
             except Exception as e:
                 print(e)
+
+
         to('second_question').when_all(m.button_type == 'next')
 
     with stage('second_question'):
@@ -1205,8 +1305,8 @@ with flowchart('ipaq/questionnaire'):
         def create_message(c):
             try:
                 vigorous_answers = [c.m.questionnaire_answers[0]["ITEMS"][i]["SELECTED_OPTION_IDS"][0] for i in
-                                      range(2)]
-                hf.StoreInput(c.m.sid, "vigorous_answers",vigorous_answers).add_value()
+                                    range(2)]
+                hf.StoreInput(c.m.sid, "vigorous_answers", vigorous_answers).add_value()
                 sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
                                  """unnest('{ 
                                  ipaq_title_moderate, 
@@ -1224,7 +1324,7 @@ with flowchart('ipaq/questionnaire'):
                                                   options=[str(i) for i in range(10, 100, 10)])]
                 questions = hf.create_question_dict(content_display=[""], items=[item_list])
                 buttons = [hf.create_buttons_dict(button_type="next", content="next", wait=True,
-                                                    language_code=c.m.language_code)]
+                                                  language_code=c.m.language_code)]
                 message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
                                                               notification_id=c.m.sid,
                                                               title=title, content=content, questions=questions,
@@ -1236,6 +1336,7 @@ with flowchart('ipaq/questionnaire'):
             except Exception as e:
                 print(e)
 
+
         to('third_question').when_all(m.button_type == 'next')
 
     with stage('third_question'):
@@ -1243,7 +1344,7 @@ with flowchart('ipaq/questionnaire'):
         def create_message(c):
             try:
                 moderate_answers = [c.m.questionnaire_answers[0]["ITEMS"][i]["SELECTED_OPTION_IDS"][0] for i in
-                                      range(2)]
+                                    range(2)]
                 hf.StoreInput(c.m.sid, "moderate_answers", moderate_answers).add_value()
                 sql_statement = (f"Select content{c.m.language_code} FROM template JOIN "
                                  """unnest('{ 
@@ -1262,7 +1363,7 @@ with flowchart('ipaq/questionnaire'):
                                                   options=[str(i) for i in range(10, 100, 10)])]
                 questions = hf.create_question_dict(content_display=[""], items=[item_list])
                 buttons = [hf.create_buttons_dict(button_type="ok", content="finish",
-                                                    language_code=c.m.language_code, wait=True)]
+                                                  language_code=c.m.language_code, wait=True)]
                 message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
                                                               notification_id=c.m.sid,
                                                               title=title, content=content, questions=questions,
@@ -1271,8 +1372,10 @@ with flowchart('ipaq/questionnaire'):
                                                               notification_name=s.notification_name,
                                                               language=c.m.language_code)
                 publish_message(c.m.client_id, s.topic, message_dict)
+
             except Exception as e:
                 print(e)
+
 
         to('save_answers').when_all(m.button_type == 'ok')
 
@@ -1281,19 +1384,19 @@ with flowchart('ipaq/questionnaire'):
         def save_answers(c):
             try:
                 walking_answers = [c.m.questionnaire_answers[0]["ITEMS"][i]["SELECTED_OPTION_IDS"][0] for i in
-                                     range(2)]
+                                   range(2)]
                 vigorous_answers = hf.StoreInput(c.m.sid, "vigorous_answers").get_value()
                 moderate_answers = hf.StoreInput(c.m.sid, "moderate_answers").get_value()
 
                 ipaq_value = (vigorous_answers[0] - 1) * (vigorous_answers[1] * 10) * 8 + (moderate_answers[0] - 1) * (
                         moderate_answers[1] * 10) * \
-                        4 + (walking_answers[0] - 1) * (walking_answers[1] * 10) * 3.3
+                             4 + (walking_answers[0] - 1) * (walking_answers[1] * 10) * 3.3
                 ipaq_value = int(round(ipaq_value, -2))
                 sql_statement = (f"UPDATE user_info SET value_ipaq = {ipaq_value} WHERE "
                                  f"user_id='{c.m.client_id}'")
                 db.DbQuery(sql_statement, "insert").create_thread()
-                if ipaq_value < 500:
-                    ipaq_value = 500
+                if ipaq_value < 300:
+                    ipaq_value = 300
                 sql_statement = f"UPDATE goal SET met_required={ipaq_value} WHERE user_id='{c.m.client_id}'"
                 db.DbQuery(sql_statement, "insert").create_thread()
 
@@ -1301,7 +1404,7 @@ with flowchart('ipaq/questionnaire'):
                 content = db.DbQuery(sql_statement, "query_one").create_thread()
                 content = content.format(ipaq_value)
                 buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
-                                                    language_code=c.m.language_code, wait=True)]
+                                                  language_code=c.m.language_code, wait=True)]
                 message_dict = jd.create_notification_message(topic=s.topic, client_id=c.m.client_id,
                                                               notification_id=c.m.sid,
                                                               content=content,
@@ -1310,18 +1413,30 @@ with flowchart('ipaq/questionnaire'):
                                                               notification_name=s.notification_name,
                                                               language=c.m.language_code)
                 publish_message(c.m.client_id, s.topic, message_dict)
-
+                sql_statement = f"SELECT value_mpam from user_info WHERE user_id='{c.m.client_id}'"
+                mpam_done = db.DbQuery(sql_statement, "query_one").create_thread()
+                if mpam_done is None:
+                    mpam = 0
+                else:
+                    mpam = 1
+                c.assert_fact({'mpam': mpam})
             except Exception as e:
                 print(e)
 
-        to('go_to_mpam').when_all(m.button_type == 'ok')
+
+        to('go_to_mpam').when_all(m.button_type == 'ok', m.mpam == 0)
+        to('delete_ipaq_state').when_all(m.button_type == 'ok', m.mpam == 1)
+
+    with stage('delete_ipaq_state'):
+        @run
+        def delete(c):
+            c.delete_state()
 
     with stage('go_to_mpam'):
         @run
         def show_credits(c):
             hf.StoreInput(c.m.sid).delete_entry()
             post("mpam/questionnaire", {"sid": c.m.sid, "client_id": c.m.client_id, "language_code": c.m.language_code})
-            c.delete_state()
 
 with flowchart('mpam/questionnaire'):
     with stage("input"):
@@ -1352,13 +1467,14 @@ with flowchart('mpam/questionnaire'):
                              ]
 
                 questions = hf.create_question_dict(content_display=[""],
-                                                      items=[item_list])
+                                                    items=[item_list])
                 buttons = [hf.create_buttons_dict(button_type="ok", content="finish",
                                                   language_code=c.m.language_code)]
                 questionnaire_type = "mpam"
                 topic = "eu/agewell/event/reasoner/notification/message"
                 notification_name = "mpam/questionnaire"
-                message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id, notification_id=c.m.sid,
+                message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                              notification_id=c.m.sid,
                                                               title=title, content=content, questions=questions,
                                                               questionnaire_type=questionnaire_type,
                                                               buttons=buttons,
@@ -1367,6 +1483,7 @@ with flowchart('mpam/questionnaire'):
                 publish_message(c.m.client_id, topic, message_dict)
             except Exception as e:
                 print(e)
+
 
         to('save_answers').when_all(m.button_type == 'ok')
 
@@ -1383,3 +1500,186 @@ with flowchart('mpam/questionnaire'):
                 c.delete_state()
             except Exception as e:
                 print(e)
+
+
+with ruleset('activity/missed'):
+    @when_all(+m.client_id)
+    def send_activites_missed(c):
+        topic = "eu/agewell/event/reasoner/notification/message"
+        notification_name = "user/activity/missed"
+        notification_id = "999"
+        buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
+                                          language_code=c.m.language_code)]
+        title = ld.title_goal_screen["activity_missed"][c.m.language_code]
+        content = ld.text_to_speech["activity_missed"][c.m.language_code].format(c.m.nickname)
+        message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                      notification_id="999",
+                                                      title=title, content=content,
+                                                      buttons=buttons,
+                                                      notification_name=notification_name,
+                                                      language=c.m.language_code)
+        publish_message(c.m.client_id, topic, message_dict)
+
+with ruleset('dashboard'):
+    try:
+        @when_all(+m.input)
+        def check_number_week(c):
+
+            c.post({'len_weeks': len(c.m.input), 'weeks': c.m.input, "language": c.m.language})
+
+
+        @when_all(m.len_weeks == 1)
+        def first_week(c):
+
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["first_week"][c.m.language]).append_value()
+            c.post({"percentage_current_week": c.m.weeks, "language": c.m.language})
+
+
+        @when_all(m.len_weeks == 2)
+        def second_week(c):
+            goal_list = [i[1] for i in c.m.weeks]
+            difference_lt = hf.difference_last_two(goal_list)
+            c.post({"percentage_current_week": c.m.weeks, "language": c.m.language})
+            c.post({"difference_lt": difference_lt, "language": c.m.language, "second_week": "yes"})
+
+
+        @when_all(m.len_weeks > 2)
+        def more_than_two_weeks(c):
+            last_five = c.m.weeks[-5:]
+            achieved_list = [i[0] for i in last_five]
+            goal_list = [i[1] for i in last_five]
+            difference_fl = hf.difference_first_last(goal_list)
+            difference_lt = hf.difference_last_two(goal_list)
+            mov_avg = np.diff(hf.moving_average(np.array(goal_list), n=len(goal_list) - 1))[0]
+            times_achieved_goal = hf.achieved_goal(last_five)
+            times_exceeded_goal = hf.exceeding_goal(last_five)
+            variability = hf.get_variability(achieved_list)
+            streak = hf.get_streak(last_five)
+            c.post({"difference_fl": difference_fl, "no_weeks": len(last_five) - 1, "language": c.m.language})
+            c.post({"mov_avg": mov_avg, "language": c.m.language})
+            c.post(
+                {"times_achieved_goal": times_achieved_goal, "no_weeks": len(last_five) - 1, "language": c.m.language})
+            c.post({"times_exceeded_goal": times_exceeded_goal, "language": c.m.language})
+            c.post({"difference_lt": difference_lt, "language": c.m.language})
+            c.post({"streak": streak, "language": c.m.language})
+            c.post({"variability": variability, "language": c.m.language})
+            c.post({"percentage_current_week": last_five, "language": c.m.language})
+
+
+        @when_all(+m.percentage_current_week)
+        def percentage_done_current_week(c):
+            percentage_done = int(c.m.percentage_current_week[-1][0] * 100 / c.m.percentage_current_week[-1][1])
+            hf.StoreInput(c.m.sid, "dashboard",
+                       ld.dashboard_desc["current_week"][c.m.language].format(percentage_done)).append_value()
+
+
+        @when_all(m.difference_fl > 0)
+        def goal_difference_pos(c):
+            hf.StoreInput(c.m.sid, "dashboard",
+                       ld.dashboard_desc["fl_pos"][c.m.language].format(c.m.difference_fl, c.m.no_weeks)).append_value()
+
+
+        @when_all(m.difference_fl < 0)
+        def goal_difference_neg(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["fl_neg"][c.m.language].format(c.m.no_weeks, abs(
+                c.m.difference_fl))).append_value()
+
+
+        @when_all(m.difference_fl == 0)
+        def goal_stayed_same(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["fl_neu"][c.m.language].format(c.m.no_weeks)).append_value()
+
+
+        @when_all(m.difference_lt == 0)
+        def goal_stayed_same(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["lt_neu"][c.m.language]).append_value()
+
+
+        @when_all(m.difference_lt > 0)
+        def goal_difference_pos(c):
+            hf.StoreInput(c.m.sid, "dashboard",
+                       ld.dashboard_desc["lt_pos"][c.m.language].format(c.m.difference_lt)).append_value()
+
+
+        @when_all(m.difference_lt < 0)
+        def goal_difference_neg(c):
+            if c.m.second_week == "yes":
+                hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["lt_neg_second"][c.m.language]).append_value()
+            else:
+                hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["lt_neg"][c.m.language]).append_value()
+
+
+        @when_all(m.mov_avg > 0)
+        def mov_avg_pos(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["mov_avg_pos"][c.m.language]).append_value()
+
+
+        @when_all(m.mov_avg < 0)
+        def mov_avg_neg(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["mov_avg_neg"][c.m.language]).append_value()
+
+
+        @when_all(c.first << m.times_achieved_goal > 0,
+                  c.second << m.times_exceeded_goal == 0)
+        def check_how_many_times(c):
+            if c.first.times_achieved_goal == 1:
+                times_achieved_goal = ld.dashboard_desc["once"]["c.m.language"]
+            else:
+                times_achieved_goal = str(c.first.times_achieved_goal) + ld.dashboard_desc["multiple"][
+                    c.first.language]
+            if c.first.no_weeks / c.first.times_achieved_goal <= 2:
+                hf.StoreInput(c.m.sid, "dashboard",
+                           ld.dashboard_desc["times_achieved_goal_singular_pos"][c.first.language].format(
+                               times_achieved_goal, c.first.no_weeks)).append_value()
+            else:
+                hf.StoreInput(c.m.sid, "dashboard",
+                           ld.dashboard_desc["times_achieved_goal_singular_neg"][c.first.language].format(
+                               times_achieved_goal,
+                               c.first.no_weeks)).append_value()
+
+
+        @when_all(c.first << m.times_achieved_goal > 0,
+                  c.second << m.times_exceeded_goal > 0)
+        def exceeded(c):
+            if c.first.times_achieved_goal == 1:
+                times_achieved_goal = ld.dashboard_desc["once"][c.first.language]
+            else:
+                times_achieved_goal = str(c.first.times_achieved_goal) + ld.dashboard_desc["multiple"][
+                    c.first.language]
+            if c.second.times_exceeded_goal == 1:
+                times_exceeded_goal = ld.dashboard_desc["once"][c.first.language]
+            else:
+                times_exceeded_goal = str(c.second.times_exceeded_goal) + ld.dashboard_desc["multiple"][
+                    c.first.language]
+            hf.StoreInput(c.first.sid, "dashboard",
+                       ld.dashboard_desc["times_exceeded_goal"][c.first.language].format(times_achieved_goal,
+                                                                                      c.first.no_weeks,
+                                                                                      times_exceeded_goal)).append_value()
+
+
+        @when_all(m.streak > 1)
+        def streak(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["streak"][c.m.language].format(c.m.streak)).append_value()
+
+
+        @when_all(m.streak <= 1)
+        def streak(c):
+            pass
+
+
+        @when_all(m.variability >= 1)
+        def high_variability(c):
+            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["variability"][c.m.language]).append_value()
+
+
+        @when_all(m.variability < 1)
+        def low_variability(c):
+            pass
+
+
+        @when_all(m.action == "delete")
+        def delete_user_state(c):
+            c.delete_state()
+
+    except Exception as e:
+        print(e)

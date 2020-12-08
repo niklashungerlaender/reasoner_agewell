@@ -3,6 +3,7 @@ from random import uniform
 import _languagedicts as ld
 import re
 import pyphen
+import numpy as np
 
 
 class StoreInput:
@@ -12,11 +13,17 @@ class StoreInput:
         self.notification_id = str(notification_id)
         self.name = name
         self.value = value
-
-    def add_value(self):
         if self.notification_id not in self.notification_dict.keys():
             self.notification_dict[self.notification_id] = {}
+
+    def add_value(self):
         self.notification_dict[self.notification_id][self.name] = self.value
+
+    def append_value(self):
+        if self.name not in self.notification_dict[self.notification_id].keys():
+            self.notification_dict[self.notification_id][self.name] = [self.value]
+        else:
+            self.notification_dict[self.notification_id][self.name].append(self.value)
 
     def get_value(self):
         return self.notification_dict[self.notification_id][self.name]
@@ -107,7 +114,6 @@ def personal_greetings(nickname, language_code):
         print (e)
 
 
-
 def string_formatting(input_string):
     rx = r'(?<=[.,!?:])(?=[^\s])'
     s = input_string
@@ -118,3 +124,53 @@ def string_formatting(input_string):
 def convert_to_string(mylist):
     mylist = [str(i) for i in mylist]
     return mylist
+
+
+#functions for dashboard
+def moving_average(goal_list, n=3):
+    ret = np.cumsum(goal_list, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+
+def achieved_goal(ls):
+    x = sum(i[0] >= i[1] for i in ls)
+    return x
+
+
+def exceeding_goal(ls):
+    x = sum(i[0] > i[1] for i in ls)
+    return x
+
+
+def difference_first_last(goal_list):
+    goal_diff = goal_list[-1] - goal_list[0]
+    return goal_diff
+
+
+def difference_last_two(goal_list):
+    goal_diff = goal_list[-1] - goal_list[-2]
+    return goal_diff
+
+
+def get_variability(achieved_list_var):
+    del achieved_list_var[-1]
+    x = np.linalg.norm(achieved_list_var)
+    if int(x) == 0:
+        pass
+    else:
+        normal_array = achieved_list_var / x
+        diff_normal_array = sum([abs(normal_array[i] - normal_array[i + 1]) for i in range(0, len(normal_array) - 1, 1)])
+        return diff_normal_array
+
+
+def get_streak(streak_list):
+    streak_list = streak_list[:-1]
+    streak_list.reverse()
+    no_streaks = 0
+    for i in streak_list:
+        if i[0] >= i[1]:
+            no_streaks += 1
+        else:
+            break
+    return no_streaks

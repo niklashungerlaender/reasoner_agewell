@@ -67,6 +67,24 @@ def create_activity_types_edit_response(topic="", activity_id="", client_id="", 
         print(e)
 
 
+def create_dashboard_response(topic="", client_id="", type="",
+                              language="", content_display="",
+                              title_display="", legend=[], data=[]):
+    try:
+        charts = [
+            {"TYPE":type, "TITLE_DISPLAY":title_display, "CONTENT_DISPLAY":content_display,
+            "LEGEND": legend, "DATA": data}
+            ]
+        nd = {"topic": topic, "properties": {}}
+        nd["properties"]["CLIENT_ID"] = client_id
+        nd["properties"]["DIMENSION_ID"] = 1
+        nd["properties"]["LANGUAGE_CODE"] = language
+        nd["properties"]["CHARTS"] = charts
+        return nd
+    except Exception as e:
+        print(e)
+
+
 def create_activity_types_response(topic="", client_id="", types="",
                                   days="", language="", content_display_sub_screens = []):
     try:
