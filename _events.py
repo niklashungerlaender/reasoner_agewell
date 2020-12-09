@@ -513,9 +513,9 @@ with ruleset('user/activities/request'):
                 title_display = ld.title_goal_screen["first_week"][c.m.language_code].format(
                     ld.italian_gender["new_week"][gender])
             elif allocated_mets == 0 and goal_start_date.date() == date.today():
-                text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname)
-                title_display = ld.title_goal_screen["new_week"][c.m.language_code].format(
-                    ld.italian_gender["new_week"][gender])
+                text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname,
+                                                                                              ld.italian_gender["new_week"][gender])
+                title_display = ld.title_goal_screen["new_week"][c.m.language_code]
             elif allocated_mets == 0:
                 text_to_speech_main = ld.text_to_speech["allocate_mets_zero"][c.m.language_code].format(nickname)
                 title_display = ld.title_goal_screen["allocate_credits"][c.m.language_code] + str(left_mets)

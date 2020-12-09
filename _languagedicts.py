@@ -1,7 +1,7 @@
 buttons = {"back": dict(en="BACK", de="ZURÜCK", it="INDIETRO", nl="TERUG"),
            "add": dict(en="ADD", de="HINZUFÜGEN", it="AGGIUNGI", nl="VOEG TOE"),
            "cancel": dict(en="CANCEL", de="ABBRECHEN", it="CANCELLA", nl="ANNULEER"),
-           "config  ": dict(en="CONFIG", de="KONFIGURIEREN", it="CONFIGURA", nl="CONFIGUREER"),
+           "config  ": dict(en="CONFIG", de="KONFIGURIEREN", it="CONFIGURA", nl="PAS AAN"),
            "hard": dict(en="Too HARD", de="Zu SCHWER", it="Troppo DIFFICILE", nl="Te MOEILIJK"),
            "easy": dict(en="Too EASY", de="Zu LEICHT", it="Troppo FACILE", nl="Te MAKKELIJK"),
            "edit": dict(en="EDIT", de="EDITIEREN", it="PUBBLICA", nl="PAS AAN"),
@@ -64,7 +64,7 @@ activity_done = {"ask_time_title": dict(en="Did you do your activity for {} minu
 activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl="Fietsen"),
                  "walking": dict(en="Walking", de="Spazieren gehen", it="A passeggio", nl="wandelen"),
                  "shoveling": dict(en="Shoveling", de="Schneeschaufeln", it="Spalare la neve",
-                                   nl="Om sneeuw te scheppen"),
+                                   nl="Sneeuw schuiven"),
                  "yoga": dict(en="Yoga", de="Yoga", it="Yoga", nl="Yoga"),
                  "strength": dict(en="Strength training", de="Krafttraining", it="Allenamento della forza",
                                   nl="Krachttraining"),
@@ -82,14 +82,15 @@ content_title = {"bullet point": dict(en="Tip", de="Tipp", it="Mancia", nl="Tip"
 
 greetings = {"morning": dict(en="Good morning", de="Guten Morgen", it="Buongiorno", nl="Goedemorgen"),
              "afternoon": dict(en="Good afternoon", de="Guten Tag", it="Buon pomeriggio",
-                               nl="Goede dag"),
+                               nl="Goedemiddag"),
              "evening": dict(en="Good evening", de="Guten Abend", it="Buona serata", nl="Goedenavond")
              }
 
-italian_gender = {"new_week": dict(male="Benvenuto", female="Benvenuta"),
+italian_gender = {"first_week": dict(male="Benvenuto", female="Benvenuta"),
+                  "new_week": dict(male="motivato", female="motivata"),
                   "activity_missed": dict(male="riuscito", female="riuscita")
                   }
-dashboard = {"goal": dict(en="Goal", de="Ziel", it="Bersaglio", nl="Doelwit"),
+dashboard = {"goal": dict(en="Goal", de="Ziel", it="Bersaglio", nl="Doel"),
              "achieved": dict(en="Achieved", de="Geschafft", it="Raggiunti", nl="Behaald"),
              "week": dict(en="Week", de="Woche", it="Settimana", nl="Week")
              }
@@ -105,7 +106,7 @@ title_goal_screen = {"weekly_credits": dict(en="Allocated: {} Credits\nAchieved:
                                         nl="Welkom in de eerste week!"),
                      "allocate_credits": dict(en="Unassigned credits: ", de="Nicht vergebene Credits: ",
                                               it="Crediti non assegnati: ",
-                                              nl="Niet-toegewezen kredieten: "),
+                                              nl="Niet-toegewezen punten: "),
                      "activity_missed": dict(
                          en="Missed activities",
                          de="Verpasste Aktivitäten",
@@ -115,12 +116,12 @@ title_goal_screen = {"weekly_credits": dict(en="Allocated: {} Credits\nAchieved:
                          en="Your activity for today: ",
                          de="Deine heutige Aktivität: ",
                          it="La tua attività per oggi: ",
-                         nl="Uw activiteit voor vandaag: "),
+                         nl="Jouw activiteit voor vandaag: "),
                      "activity_today_multiple": dict(
                          en="Your activities for today: ",
                          de="Deine heutigen Aktivitäten: ",
                          it="Le tue attività per oggi: ",
-                         nl="Uw activiteiten voor vandaag: "),
+                         nl="Jouw activiteiten voor vandaag: "),
                      "personal_week": dict(
                          en="Your week: {} till {}\nLeft days: {}",
                          de="Deine Woche: {} bis {}\nVerbleibende Tage: {}",
@@ -144,7 +145,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "gemacht hast, löschen, indem du auf den Knopf 'Aktivität entfernen' klickst.",
                       it="Puoi eliminare tutti i giorni in cui hai pianificato l'attività senza completarla, "
                          "premendo il pulsante 'Elimina attività.",
-                      nl="U kunt alle dagen verwijderen waarop u de activiteit heeft gepland maar niet uitgevoerd "
+                      nl="Je kunt alle dagen verwijderen waarop je de activiteit hebt gepland maar niet uitgevoerd "
                          "door op de knop 'Activiteit verwijderen' te drukken."),
                   "first_week": dict(
                       en="Hello{}! What do you think about planning your physical activity weekly? It will help you "
@@ -153,16 +154,16 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       de="Hallo{}! Was hältst du davon deine körperlichen Aktivitäten wöchentlich zu planen? Es hilft "
                          "dir, gesund und motiviert zu bleiben! Du kannst die Aktivitäten machen die du möchtest und "
                          "gleich damit beginnen.",
-                      it="Ciao{}! Cosa ne pensate di programmare settimanalmente le vostre attività fisiche? Ti "
-                         "aiuterà a rimanere in salute e motivato! Puoi fare le attività che desideri e iniziare "
-                         "subito.",
+                      it="Ciao{}! Ti piacerebbe pianificare la tua attività fisica a livello settimanale? Ti aiuterà "
+                         "a restare in salute e a sentirti {}! Puoi iniziare subito a scegliere le "
+                         "attività che preferisci e ad impostare il tuo obiettivo.",
                       nl="Hallo{}! Wat denk je ervan om wekelijks je beweegactiviteiten in te plannen? Het zal je "
                          "helpen om gezond en gemotiveerd te blijven! Je kan je activiteiten en je doel instellen. Je "
                          "kunt er nu mee starten."),
                   "new_week": dict(
-                      en="Hello{}! A new week just started which means you get new credits for the upcoming "
-                         "7 days. Your old activities have been deleted, but you can watch your last weeks "
-                         "performance on the goal information screen.",
+                      en="Hallo{}! Er is net een nieuwe week begonnen, wat betekent dat je nieuwe credits krijgt voor " 
+                         "de komende 7 dagen. Je oude activiteiten zijn verwijderd, maar je kunt je prestaties van de "
+                         "afgelopen week bekijken op het scherm met het doelen overzicht.",
                       de="Hallo{}! Eine neue Woche hat gerade begonnen, was bedeutet, dass du für die "
                          "kommenden 7 Tage neue Credits erhältst. Deine alten Aktivitäten wurden gelöscht "
                          "aber kein Sorge, du kannst deine Leistung der letzten Woche auf dem Info "
@@ -180,7 +181,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "hole das nach um aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto crediti per questa settimana. Cerca di continuare a "
                          "farlo, per rimanere in attività.",
-                      nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit om actief te blijven."),
+                      nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
                   "allocate_mets": dict(
                       en="Hello{}. I see you haven't allocated all credits for this week. Please do so in order "
                          "to meet your weekly goal and stay active.",
@@ -188,12 +189,11 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto tutti i crediti per questa settimana. Prova a completare "
                          "il tuo obiettivo settimanale per non perdere l'allenamento.",
-                      nl="Hallo{}. Ik zie dat je deze week niet alle credits hebt toegewezen. Doe dit om je "
-                         "wekelijkse doel te bereiken en actief te blijven."),
+                      nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
                   "select_activity": dict(en="Please select a new physical activity for the upcoming week.",
                                           de="Bitte wähle eine neue Aktivität für die kommende Woche aus.",
                                           it="Seleziona un nuova attività fisica per la prossima settimana.",
-                                          nl="Selecteer alstublieft een nieuwe beweegactiviteit voor de komende week."),
+                                          nl="Selecteer een nieuwe beweegactiviteit voor de komende week."),
                   "days": dict(en="Please choose on which day(s) you want to exercise.",
                                de="Bitte wähle aus an welchen Tagen du die Aktivität machen möchtest.",
                                it="Scegli in quali giorni desideri allenarti.",
@@ -209,11 +209,11 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "du sehen, wie sich die Aktivität auf dein wöchentliches Ziel auswirkt.",
                       it="Puoi scegliere la durata della tua attività. Nella parte inferiore dello schermo, "
                          "puoi vedere quanto l'attività influisce sul tuo obiettivo settimanale.",
-                      nl="Kies de duur van uw activiteit. U kunt onderin het scherm zien hoe dit uw weekdoel beïnvloed."),
+                      nl="Kies de duur van de activiteit. Je kunt onderin het scherm zien hoe dit je weekdoel beïnvloed."),
                   "goal_info": dict(en="Here are some details about your weekly performance.",
                                     de="Hier sind Details zu deiner wöchentlichen Leistung.",
                                     it="Ecco alcuni dettagli sul tuo piano settimanale.",
-                                    nl="Hier zijn enkele details over uw wekelijkse behaalde doelen."),
+                                    nl="Hier zijn enkele details over je wekelijkse behaalde doelen."),
                   "activity_today_single": dict(
                       en="Hey{}, I see you have an open activity for today. Plan your day accordingly so "
                          "you have enough time for it. When you have done it already you can finish "
@@ -224,8 +224,8 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       it="Ehi {}, vedo che hai un'attività in programma per oggi. Pianifica la tua giornata in modo "
                          "da avere abbastanza tempo per svolgerla. Quando avrai terminato, puoi premere il pulsante "
                          "'Attività completata' nella schermata dell'attività.",
-                      nl="Hey {}, ik zie dat er voor vandaag een openstaande activiteit staat. Plan uw dag zodat u er "
-                         "genoeg tijd voor heeft. Als u de activiteit al heeft uitgevoerd, kunt u dit aangeven door "
+                      nl="Hey {}, ik zie dat er voor vandaag een openstaande activiteit staat. Plan je dag zodat je er "
+                         "voldoende tijd voor hebt. Als je de activiteit al hebt uitgevoerd, kun je dit aangeven door "
                          "op de knop 'Activiteit uitgevoerd' op het activiteitenscherm te drukken."),
                   "activity_today_multiple": dict(
                       en="Hey{}, I see you have open activities for today. Plan your day accordingly so "
@@ -238,9 +238,9 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       it="Ehi {}, vedo che hai più attività in programma per oggi. Pianifica la tua giornata in modo "
                          "da avere abbastanza tempo da dedicare ad esse. Quando ne hai già fatta una, puoi premere il "
                          "pulsante 'Attività completata' nella schermata dell'attività.",
-                      nl="Hey {}, ik zie dat er voor vandaag openstaande activiteiten zijn. Plan uw dag zodat u er "
-                         "genoeg tijd voor heeft. Als u er al een heeft uitgevoerd, kunt u dit aangeven door op de "
-                         "knop 'Activiteit uitgevoerd' op het activiteitenscherm te drukken."),
+                      nl="Hey {}, ik zie dat er voor vandaag een openstaande activiteit staat. Plan je dag zodat je er "
+                         "voldoende tijd voor hebt. Als je de activiteit al hebt uitgevoerd, kun je dit aangeven door "
+                         "op de knop 'Activiteit uitgevoerd' op het activiteitenscherm te drukken."),
                   "on_track": dict(
                       en="Hello there{}. Seems you have done all activities scheduled for today. Congratulations!"
                          "You can relax now with a good feeling and treat yourself to something nice.",
@@ -249,7 +249,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "schönes gönnen.",
                       it="Ciao {}. Sembra che tu abbia svolto tutte le attività programmate per oggi. Congratulazioni! "
                          "Ora puoi rilassarti con una bella sensazione e concederti qualcosa di carino.",
-                      nl="Hallo daar {}. Het lijkt erop dat je alle geplande activiteiten voor vandaag hebt gedaan. "
+                      nl="Hallo {}. Het lijkt erop dat je alle geplande activiteiten voor vandaag hebt gedaan. "
                          "Gefeliciteerd! Je kunt nu ontspannen met een goed gevoel en jezelf trakteren op iets leuks."),
                   "day_off": dict(
                       en="Hello there{}. Seems you have a break day today. Still, you can revise your weekly plan "
@@ -262,8 +262,8 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                       it="Ciao{}. Sembra che tu abbia una giornata di pausa oggi. Puoi comunque rivedere il tuo "
                          "programma settimanale o programmare un'attività anche oggi se lo desideri e ti senti in "
                          "forma. Altrimenti rilassati, così sarai in forma per i prossimi giorni.",
-                      nl="Hallo daar{}. Het lijkt erop dat u vandaag een rustdag hebt. Toch kunt u uw weekplan "
-                         "herzien en een activiteit voor vandaag plannen als u zich fit voelt. U kunt ook uw energie "
+                      nl="Hallo {}. Het lijkt erop dat je vandaag een rustdag hebt. Als je je fit voelt dan kun kun je jouw weekplan "
+                         "herzien en alsnog een activiteit voor vandaag inplannen. Je kunt ook je energie "
                          "sparen voor de komende dagen."),
                   "activity_missed": dict(
                       en="Good to see you{}! I see you had tasks in the last days which you were not able to do. "
@@ -279,11 +279,10 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "negli ultimi giorni. Nessun problema, ho cancellato queste attività per te. La buona "
                          "notizia è che riceverai indietro crediti da utilizzare per nuove attività! Assicurati di "
                          "spenderli per raggiungere il tuo obiettivo settimanale.",
-                      nl="Goed om je te zien{}! Ik zie dat je taken had die je de afgelopen dagen niet hebt kunnen "
-                         "doen. Geen probleem, ik "
-                         "heb deze taken voor je verwijderd. Het goede nieuws is dat u credits terugkrijgt om te "
-                         "gebruiken voor nieuwe activiteiten! Zorg ervoor dat u ze uitgeeft om uw wekelijkse doel te "
-                         "bereiken."),
+                      nl="Goed om je te zien {}! Ik zie dat je taken had ingepland die je de afgelopen dagen niet hebt "
+                         "kunnen doen. Geen probleem, ik heb deze taken voor je verwijderd. Het goede nieuws is dat je "
+                         "credits terugkrijgt om te gebruiken voor nieuwe activiteiten! Zorg ervoor dat je ze uitgeeft "
+                         "om je wekelijkse doel te bereiken."),
                   "activity_info": dict(
                       en="You can reschedule your days and duration for this activity by clicking the 'Edit Activity' "
                          "button.",
