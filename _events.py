@@ -1592,7 +1592,7 @@ with ruleset('motivation/weekly'):
                     "query_random").create_thread()
             buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
                                               language_code=language_code)]
-            content = content[:-1]
+            content = content.replace('"""', '"').replace('""', '"')[:-1]
             message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
                                                           notification_id="999", content=content,
                                                           buttons=buttons,
