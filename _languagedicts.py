@@ -16,7 +16,8 @@ buttons = {"back": dict(en="BACK", de="ZURÜCK", it="INDIETRO", nl="TERUG"),
            "right": dict(en="Just RIGHT", de="Genau RICHTIG", it="Così va bene", nl="Precies GOED"),
            "ignore": dict(en="IGNORE", de="IGNORIEREN", it="IGNORA", nl="Negeer"),
            "yes": dict(en="YES", de="JA", it="Sì ", nl="JA"),
-           "no": dict(en="NO", de="NEIN", it="No", nl="Nee")}
+           "no": dict(en="NO", de="NEIN", it="No", nl="Nee"),
+           "open": dict(en="SHOW", de="ANZEIGEN", it="MOSTRARE", nl="TONEN")}
 
 weekDays = {"en": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
             "de": ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
@@ -90,9 +91,18 @@ italian_gender = {"first_week": dict(male="Benvenuto", female="Benvenuta"),
                   "new_week": dict(male="motivato", female="motivata"),
                   "activity_missed": dict(male="riuscito", female="riuscita")
                   }
-dashboard = {"goal": dict(en="Goal", de="Ziel", it="Bersaglio", nl="Doel"),
+mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heute?", it="Come ti senti oggi?",
+                        nl="How do you feel today?"),
+        "evening": dict(en="How was your day?", de="Wie war dein Tag?", it="Com'è andata la tua giornata?",
+                        nl="How was your day?")
+        }
+dashboard = {"days": dict(en="Days", de="Tage", it="Giorni", nl="Dagen"),
+             "goal": dict(en="Goal", de="Ziel", it="Bersaglio", nl="Doel"),
              "achieved": dict(en="Achieved", de="Geschafft", it="Raggiunti", nl="Behaald"),
-             "week": dict(en="Week", de="Woche", it="Settimana", nl="Week")
+             "week": dict(en="Week", de="Woche", it="Settimana", nl="Week"),
+             "mood": dict(en="Mood Tracker", de="Stimmung", it="", nl=""),
+             "morning": dict(en="Morning", de="Morgens", it="", nl=""),
+             "evening": dict(en="Evening", de="Abends", it="", nl="")
              }
 title_goal_screen = {"weekly_credits": dict(en="Allocated: {} Credits\nAchieved: {} Credits\nGoal: {} Credits",
                                             de="Zugewiesen: {} Credits\nErreicht: {} Credits\nZiel: {} Credits",
@@ -161,7 +171,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "helpen om gezond en gemotiveerd te blijven! Je kan je activiteiten en je doel instellen. Je "
                          "kunt er nu mee starten."),
                   "new_week": dict(
-                      en="Hallo{}! Er is net een nieuwe week begonnen, wat betekent dat je nieuwe credits krijgt voor " 
+                      en="Hallo{}! Er is net een nieuwe week begonnen, wat betekent dat je nieuwe credits krijgt voor "
                          "de komende 7 dagen. Je oude activiteiten zijn verwijderd, maar je kunt je prestaties van de "
                          "afgelopen week bekijken op het scherm met het doelen overzicht.",
                       de="Hallo{}! Eine neue Woche hat gerade begonnen, was bedeutet, dass du für die "

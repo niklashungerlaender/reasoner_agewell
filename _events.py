@@ -11,6 +11,7 @@ from random import randint
 import _sqlstatements as ss
 import math
 import numpy as np
+from collections import defaultdict
 
 
 # schedules notifications for weekly goals from ruleset firstgoal/intern and flowchart goal
@@ -51,13 +52,29 @@ with ruleset('firstgoal/intern'):
     def create_goal_notification(c):
         try:
             notification_id = str(uuid.uuid1().int)
+            notification_id_2 = str(uuid.uuid1().int)
+            notification_id_3 = str(uuid.uuid1().int)
+            notification_id_4 = str(uuid.uuid1().int)
             run_time = datetime.now() + timedelta(days=6)
             run_time = run_time.replace(hour=23, minute=59, second=59)
+            run_time_mot_messages = datetime.now() + timedelta(days=3)
+            run_time_mot_messages = run_time_mot_messages.replace(hour=10, minute=00)
+            run_time_mood_daily = datetime.now() + timedelta(days=1)
+            run_time_mood_morning = run_time_mood_daily.replace(hour=10, minute=00)
+            run_time_mood_evening = run_time_mood_daily.replace(hour=20, minute=00)
             db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time), "insert").create_thread()
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
                                         trigger="date", run_date=run_time,
                                         args=["goal", c.m.client_id])
-
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4,
+                                        trigger="date", run_date=run_time_mot_messages,
+                                        args=["motivation/weekly", c.m.client_id])
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
+                                        trigger="date", run_date=run_time_mood_morning,
+                                        args=["mood/morning", c.m.client_id])
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3,
+                                        trigger="date", run_date=run_time_mood_evening,
+                                        args=["mood/evening", c.m.client_id])
             language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
             query_content = db.DbQuery(ss.query("get_firstgoal_content", language_code=c.m.language_code),
                                        "query_all").create_thread()
@@ -357,7 +374,7 @@ with ruleset('user/activities/request'):
     def get_user_activities(c):
         try:
             active_goal = db.DbQuery(ss.query("get_goal_id", client_id=c.m.client_id), "query_one").create_thread()
-            #checks if there is a goal, if not one is created with 1000 credits
+            # checks if there is a goal, if not one is created with 1000 credits
             if not active_goal:
                 notification_id = str(uuid.uuid1().int)
                 run_time = datetime.now() + timedelta(days=6)
@@ -368,7 +385,7 @@ with ruleset('user/activities/request'):
                                             trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
 
-            #query variables
+            # query variables
             weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
                                           "query_one").create_thread()
             allocated_mets = db.DbQuery(ss.query("get_selected_mets", client_id=c.m.client_id),
@@ -387,7 +404,7 @@ with ruleset('user/activities/request'):
                                                        "query_one").create_thread()
             gender = db.DbQuery(ss.query("get_gender", client_id=c.m.client_id), "query_one").create_thread()
 
-            #compute queried variables
+            # compute queried variables
             if weekly_goal_mets == None:
                 weekly_goal_mets = 0
             try:
@@ -417,16 +434,17 @@ with ruleset('user/activities/request'):
                 activity_active_today = []
             try:
                 activity_done_today = db.DbQuery(ss.query("get_activities_done_today", client_id=c.m.client_id),
-                                                   "query_all").create_thread()
+                                                 "query_all").create_thread()
             except:
                 activity_done_today = []
             activity_missed = db.DbQuery(ss.query("get_missed_days", client_id=c.m.client_id),
                                          "query_all").create_thread()
             activity_missed = [var for tup in activity_missed for var in tup]
             if len(activity_missed) > 0:
-                post("activity/missed", {"client_id":c.m.client_id, "language_code":c.m.language_code, "nickname":nickname})
+                post("activity/missed",
+                     {"client_id": c.m.client_id, "language_code": c.m.language_code, "nickname": nickname})
                 db.DbQuery(ss.query("delete_missed_days", client_id=c.m.client_id),
-                                                 "insert").create_thread()
+                           "insert").create_thread()
             activity_infos = [
                 {"activity_name": ld.activity_name[i[0]][c.m.language_code],
                  "days": [ld.weekDays[c.m.language_code][j.weekday()] for j in i[1]], "activity_duration": i[2],
@@ -498,7 +516,6 @@ with ruleset('user/activities/request'):
                                      }
                 activity_list.append(dict_for_activity)
 
-
             if gender is "FEMALE":
                 gender = "female"
             else:
@@ -514,7 +531,8 @@ with ruleset('user/activities/request'):
                     ld.italian_gender["new_week"][gender])
             elif allocated_mets == 0 and goal_start_date.date() == date.today():
                 text_to_speech_main = ld.text_to_speech["new_week"][c.m.language_code].format(nickname,
-                                                                                              ld.italian_gender["new_week"][gender])
+                                                                                              ld.italian_gender[
+                                                                                                  "new_week"][gender])
                 title_display = ld.title_goal_screen["new_week"][c.m.language_code]
             elif allocated_mets == 0:
                 text_to_speech_main = ld.text_to_speech["allocate_mets_zero"][c.m.language_code].format(nickname)
@@ -565,15 +583,15 @@ with ruleset('user/activities/request'):
             print(e)
 
 with ruleset('user/dashboard/request'):
-    @when_all(+m.client_id)
-    def create_dashboard_response(c):
+    @when_all(+m.source_id)
+    def create_physical_graph(c):
         try:
             chart_type = "COMBINED"
             title_display = ld.activity_name["activity"][c.m.language_code]
-            legend = [ld.dashboard["achieved"][c.m.language_code],ld.dashboard["goal"][c.m.language_code]]
+            legend = [ld.dashboard["achieved"][c.m.language_code], ld.dashboard["goal"][c.m.language_code]]
             sql_statement = f"SELECT count(goal_id) from goal WHERE user_id = '{c.m.client_id}'"
             number_of_weeks = db.DbQuery(sql_statement, "query_one").create_thread()
-            number_of_weeks = max(0, number_of_weeks-5)
+            number_of_weeks = max(0, number_of_weeks - 5)
             sql_statement = (f"SELECT achieved, met_required from goal where user_id = '{c.m.client_id}' "
                              f"ORDER BY goal_id DESC LIMIT 5")
             goal_vars = db.DbQuery(sql_statement, "query_all").create_thread()
@@ -587,19 +605,67 @@ with ruleset('user/dashboard/request'):
                      "Y": [0 if v is None else v for v in j]}
                 data.append(x)
             data[-1]["Y"][0] = done_mets
-            #get plot description (ruleset at end of script)
-            post('dashboard', {'sid': c.m.client_id, 'input': list(data[i]["Y"] for i in range(len(data))), 'language': c.m.language_code})
-            content_display = hf.StoreInput(c.m.client_id, "dashboard").get_value()
+            # get plot description (ruleset at end of script)
+            post('dashboard', {'sid': c.m.client_id, 'input': list(data[i]["Y"] for i in range(len(data))),
+                               'language': c.m.language_code})
+            content_display = hf.StoreInput(c.m.client_id, "dashboard").get_value()[0]
             hf.StoreInput(c.m.client_id, "dashboard").delete_entry()
+            charts = [
+                {"TYPE": chart_type, "TITLE_DISPLAY": title_display, "CONTENT_DISPLAY": content_display,
+                 "LEGEND": legend, "DATA": data}
+            ]
+            c.post({"client_id": c.m.client_id, "language_code": c.m.language_code,
+                                              "mood": True, "charts":charts})
+        except Exception as e:
+            print(e)
 
+
+    @when_all(+m.mood)
+    def create_mood_graph(c):
+        try:
+            chart_type = "MOOD"
+            title_display = ld.dashboard["mood"][c.m.language_code]
+            legend = [ld.dashboard["morning"][c.m.language_code], ld.dashboard["evening"][c.m.language_code]]
+            sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where " 
+                            f"time_of_day='evening' and user_id = '{c.m.client_id}'")
+            mood_evening = dict(db.DbQuery(sql_statement, "query_all").create_thread())
+            sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where "
+                             f"time_of_day='morning' and user_id = '{c.m.client_id}'")
+            mood_morning = dict(db.DbQuery(sql_statement, "query_all").create_thread())
+            dd = defaultdict(list)
+            for i in mood_evening.keys():
+                if i not in mood_morning.keys():
+                    mood_morning[i] = -1
+            for i in mood_morning.keys():
+                if i not in mood_evening.keys():
+                    mood_evening[i] = -1
+            for d in (mood_morning, mood_evening):
+                for key, values in d.items():
+                    dd[key].append(values)
+            dd = dict(sorted(dd.items()))
+            #dd = {"Today" if k == 0 else k: v for k, v in dd.items()}
+            data = []
+            for x, y in dd.items():
+                z = {"X": x, "Y": y}
+                data.append(z)
             topic = "eu/agewell/event/reasoner/user/dashboard/response"
+            x_axis_label = ld.dashboard["days"][c.m.language_code]
+            charts = [
+                {"TYPE": chart_type, "TITLE_DISPLAY": title_display,
+                 "LEGEND": legend, "DATA": data, "X_AXIS_LABEL": x_axis_label}
+            ]
+            charts = c.m.charts + charts
             message_dict = jd.create_dashboard_response(topic=topic, client_id=c.m.client_id,
                                                         language=c.m.language_code,
-                                                        type=chart_type, content_display=content_display,
-                                                        title_display=title_display, legend=legend, data=data)
+                                                        charts=charts)
             publish_message(c.m.client_id, topic, message_dict)
+            #notification_id_2 = str(uuid.uuid1().int)
+            """run_time_mood_daily = datetime.now() + timedelta(seconds=1)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
+                                        trigger="date", run_date=run_time_mood_daily,
+                                        args=["mood/evening", c.m.client_id])"""
         except Exception as e:
-            print (e)
+            print(e)
 
 with ruleset('delete/user'):
     @when_all(+m.client_id)
@@ -889,7 +955,8 @@ with ruleset('notification/morning'):
             print(activity_name_message, s.content_msg, met_message)
             content = activity_name_message + s.content_msg + met_message
 
-            button_left = hf.create_buttons_dict(button_type="cancel", content="ignore", language_code=s.language_code)
+            button_left = hf.create_buttons_dict(button_type="edit", content="open", language_code=s.language_code,
+                                                 open_activity=s.kwargs['activity_type'])
             button_right = hf.create_buttons_dict(button_type="ok", content="thanks", language_code=s.language_code)
             button_middle = hf.create_buttons_dict(button_type="postpone", content="postpone",
                                                    language_code=s.language_code)
@@ -961,7 +1028,8 @@ with flowchart('notification/evening'):
                 db.DbQuery(sql_statement, "insert").create_thread()
                 post('notification/evening', {"sid": c.m.sid, "to_ask_time": "ok"})
             except Exception as e:
-                print (e)
+                print(e)
+
 
         to('ask_time').when_all(m.to_ask_time == 'ok')
 
@@ -1037,7 +1105,8 @@ with flowchart('notification/evening'):
                                                               language=language_code)
                 publish_message(client_id, s.topic, message_dict)
             except Exception as e:
-                print (e)
+                print(e)
+
 
         to('done').when_all(m.button_type == 'ok')
         to('set_time').when_all(m.button_type == 'edit')
@@ -1046,9 +1115,7 @@ with flowchart('notification/evening'):
         @run
         def create_message(c):
             try:
-                item_list = [hf.create_items_dict(content_display=ld.minutes[c.m.language_code],
-                                                  item_type="single_select", item_id=1,
-                                                  options=[str(i) for i in range(10, 130, 10)])]
+                item_list = [hf.create_items_dict(item_type="text_minutes", item_id=1)]
                 questions = hf.create_question_dict(content_display=[""], items=[item_list])
                 questionnaire_type = "time"
                 button_right = hf.create_buttons_dict(button_type="ok", content="ok",
@@ -1065,7 +1132,9 @@ with flowchart('notification/evening'):
                                                               language=c.m.language_code)
                 publish_message(c.m.client_id, s.topic, message_dict)
             except Exception as e:
-                print (e)
+                print(e)
+
+
         to('done').when_all(m.button_type == 'ok')
 
     with stage('done'):
@@ -1074,11 +1143,11 @@ with flowchart('notification/evening'):
             try:
                 task_id = hf.StoreInput(c.m.sid, "task_id").get_value()
                 try:
-                    manual_time = int(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0]) * 10
+                    manual_time = int(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0])
                     sql_statement = f"UPDATE task SET duration={manual_time} WHERE task_id = {task_id}"
                     db.DbQuery(sql_statement, "insert").create_thread()
                 except Exception as e:
-                    print (e)
+                    print(e)
                 sql_statement = f"UPDATE task SET activity_done='True' WHERE task_id = {task_id}"
                 db.DbQuery(sql_statement, "insert").create_thread()
                 sql_statement = f"Select content{c.m.language_code} FROM template WHERE daily = 'pos'"
@@ -1501,13 +1570,154 @@ with flowchart('mpam/questionnaire'):
             except Exception as e:
                 print(e)
 
+with ruleset('motivation/weekly'):
+    @when_all(+m.client_id)
+    def send_motivation_text(c):
+        try:
+            run_time_mot_messages = datetime.now() + timedelta(seconds=5)
+            notification_id = uuid.uuid1().int
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
+                                        trigger="date", run_date=run_time_mot_messages,
+                                        args=["motivation/weekly", c.m.client_id])
+            topic = "eu/agewell/event/reasoner/notification/message"
+            notification_name = "motivation/weekly"
+            language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            try:
+                content = db.DbQuery(
+                    ss.query("motivational_content", language_code=language_code, client_id=c.m.client_id),
+                    "query_one").create_thread()
+            except:
+                content = db.DbQuery(
+                    ss.query("motivational_content_random", language_code=language_code, client_id=c.m.client_id),
+                    "query_random").create_thread()
+            buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
+                                              language_code=language_code)]
+            content = content[:-1]
+            message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                          notification_id="999", content=content,
+                                                          buttons=buttons,
+                                                          notification_name=notification_name,
+                                                          language=language_code,
+                                                          notification_background="#ffffb3")
+            publish_message(c.m.client_id, topic, message_dict)
+        except Exception as e:
+            print(e)
+
+with ruleset('mood/morning'):
+    @when_all(+m.scheduler_id)
+    def send_motivation_text(c):
+        try:
+            reminder_id_morning = db.DbQuery(ss.query("get_morning_not_id", client_id=c.m.client_id),
+                                             "query_one").create_thread()
+            if reminder_id_morning is None:
+                reminder_id_morning = 0
+            run_time_morning = datetime.today() + timedelta(days=1)
+            date_for_scheduler = datetime.combine(run_time_morning, hf.get_reminder_time("morning",
+                                                                                         reminder_id_morning))
+            notification_id_morning = str(uuid.uuid1().int)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_morning,
+                                        trigger="date", run_date=date_for_scheduler,
+                                        args=["mood/morning", c.m.client_id])
+            topic = "eu/agewell/event/reasoner/notification/message"
+            content = ld.mood["morning"][c.m.language_code]
+            notification_name = "mood/morning"
+            language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            item_list = [hf.create_items_dict(content_display=ld.ipaq["days_content"][language_code],
+                                              item_type="single_smiley", item_id=1)]
+            questions = hf.create_question_dict(content_display=[""], items=[item_list])
+            button_left = hf.create_buttons_dict(button_type="cancel", content="cancel",
+                                                 language_code=c.m.language_code)
+            button_right = hf.create_buttons_dict(button_type="ok", content="ok",
+                                                  language_code=c.m.language_code)
+            buttons = [button_right, button_left]
+            message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                          notification_id=c.m.sid,
+                                                          buttons=buttons,
+                                                          notification_name=notification_name,
+                                                          language=language_code,
+                                                          questions=questions, content=content)
+            publish_message(c.m.client_id, topic, message_dict)
+        except Exception as e:
+            print(e)
+
+
+    @when_all(m.button_type == "ok")
+    def get_feedback(c):
+        print(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0])
+
+        sql_statement = (f"INSERT INTO mood_daily(user_id, value_mood, date_mood, time_of_day) VALUES "
+                         f"('{c.m.client_id}',{c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}, "
+                         f"'{datetime.today()}', 'morning')")
+        db.DbQuery(sql_statement, "insert").create_thread()
+
+        c.delete_state()
+
+    @when_all(m.button_type == "cancel")
+    def delete_mot_state(c):
+        c.delete_state()
+
+with ruleset('mood/evening'):
+    @when_all(+m.scheduler_id)
+    def send_motivation_text(c):
+        try:
+            reminder_id_evening = db.DbQuery(ss.query("get_evening_not_id", client_id=c.m.client_id),
+                                             "query_one").create_thread()
+            if reminder_id_evening is None:
+                reminder_id_evening = 0
+            run_time_evening = datetime.today() + timedelta(days=1)
+            date_for_scheduler = datetime.combine(run_time_evening, hf.get_reminder_time("evening",
+                                                                                         reminder_id_evening))
+            notification_id_evening = str(uuid.uuid1().int)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_evening,
+                                        trigger="date", run_date=date_for_scheduler,
+                                        args=["mood/evening", c.m.client_id])
+            topic = "eu/agewell/event/reasoner/notification/message"
+            content = ld.mood["morning"][c.m.language_code]
+            notification_name = "mood/evening"
+            language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            item_list = [hf.create_items_dict(content_display=ld.ipaq["days_content"][language_code],
+                                              item_type="single_smiley", item_id=1)]
+            questions = hf.create_question_dict(content_display=[""], items=[item_list])
+            button_left = hf.create_buttons_dict(button_type="cancel", content="cancel",
+                                                 language_code=c.m.language_code)
+            button_right = hf.create_buttons_dict(button_type="ok", content="ok",
+                                                  language_code=c.m.language_code)
+            buttons = [button_right, button_left]
+            message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                          notification_id=c.m.sid,
+                                                          buttons=buttons,
+                                                          notification_name=notification_name,
+                                                          language=language_code,
+                                                          questions=questions,
+                                                          content=content)
+            publish_message(c.m.client_id, topic, message_dict)
+        except Exception as e:
+            print(e)
+
+
+    @when_all(m.button_type == "ok")
+    def get_feedback(c):
+        try:
+            sql_statement = (f"INSERT INTO mood_daily(user_id, value_mood, date_mood, time_of_day) VALUES "
+                             f"('{c.m.client_id}',{c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}, "
+                             f"'{datetime.today()}', 'evening') ON CONFLICT ON CONSTRAINT "
+                             f"mood_daily_date_mood_user_id_time_of_day_key "
+                             f"DO UPDATE SET value_mood= {c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}")
+            db.DbQuery(sql_statement, "insert").create_thread()
+            c.delete_state()
+        except Exception as e:
+            print(e)
+
+
+    @when_all(m.button_type == "cancel")
+    def delete_mot_state(c):
+        c.delete_state()
 
 with ruleset('activity/missed'):
     @when_all(+m.client_id)
     def send_activites_missed(c):
         topic = "eu/agewell/event/reasoner/notification/message"
         notification_name = "user/activity/missed"
-        notification_id = "999"
         buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
                                           language_code=c.m.language_code)]
         title = ld.title_goal_screen["activity_missed"][c.m.language_code]
@@ -1570,13 +1780,14 @@ with ruleset('dashboard'):
         def percentage_done_current_week(c):
             percentage_done = int(c.m.percentage_current_week[-1][0] * 100 / c.m.percentage_current_week[-1][1])
             hf.StoreInput(c.m.sid, "dashboard",
-                       ld.dashboard_desc["current_week"][c.m.language].format(percentage_done)).append_value()
+                          ld.dashboard_desc["current_week"][c.m.language].format(percentage_done)).append_value()
 
 
         @when_all(m.difference_fl > 0)
         def goal_difference_pos(c):
             hf.StoreInput(c.m.sid, "dashboard",
-                       ld.dashboard_desc["fl_pos"][c.m.language].format(c.m.difference_fl, c.m.no_weeks)).append_value()
+                          ld.dashboard_desc["fl_pos"][c.m.language].format(c.m.difference_fl,
+                                                                           c.m.no_weeks)).append_value()
 
 
         @when_all(m.difference_fl < 0)
@@ -1587,7 +1798,8 @@ with ruleset('dashboard'):
 
         @when_all(m.difference_fl == 0)
         def goal_stayed_same(c):
-            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["fl_neu"][c.m.language].format(c.m.no_weeks)).append_value()
+            hf.StoreInput(c.m.sid, "dashboard",
+                          ld.dashboard_desc["fl_neu"][c.m.language].format(c.m.no_weeks)).append_value()
 
 
         @when_all(m.difference_lt == 0)
@@ -1598,7 +1810,7 @@ with ruleset('dashboard'):
         @when_all(m.difference_lt > 0)
         def goal_difference_pos(c):
             hf.StoreInput(c.m.sid, "dashboard",
-                       ld.dashboard_desc["lt_pos"][c.m.language].format(c.m.difference_lt)).append_value()
+                          ld.dashboard_desc["lt_pos"][c.m.language].format(c.m.difference_lt)).append_value()
 
 
         @when_all(m.difference_lt < 0)
@@ -1629,13 +1841,13 @@ with ruleset('dashboard'):
                     c.first.language]
             if c.first.no_weeks / c.first.times_achieved_goal <= 2:
                 hf.StoreInput(c.m.sid, "dashboard",
-                           ld.dashboard_desc["times_achieved_goal_singular_pos"][c.first.language].format(
-                               times_achieved_goal, c.first.no_weeks)).append_value()
+                              ld.dashboard_desc["times_achieved_goal_singular_pos"][c.first.language].format(
+                                  times_achieved_goal, c.first.no_weeks)).append_value()
             else:
                 hf.StoreInput(c.m.sid, "dashboard",
-                           ld.dashboard_desc["times_achieved_goal_singular_neg"][c.first.language].format(
-                               times_achieved_goal,
-                               c.first.no_weeks)).append_value()
+                              ld.dashboard_desc["times_achieved_goal_singular_neg"][c.first.language].format(
+                                  times_achieved_goal,
+                                  c.first.no_weeks)).append_value()
 
 
         @when_all(c.first << m.times_achieved_goal > 0,
@@ -1652,14 +1864,15 @@ with ruleset('dashboard'):
                 times_exceeded_goal = str(c.second.times_exceeded_goal) + ld.dashboard_desc["multiple"][
                     c.first.language]
             hf.StoreInput(c.first.sid, "dashboard",
-                       ld.dashboard_desc["times_exceeded_goal"][c.first.language].format(times_achieved_goal,
-                                                                                      c.first.no_weeks,
-                                                                                      times_exceeded_goal)).append_value()
+                          ld.dashboard_desc["times_exceeded_goal"][c.first.language].format(times_achieved_goal,
+                                                                                            c.first.no_weeks,
+                                                                                            times_exceeded_goal)).append_value()
 
 
         @when_all(m.streak > 1)
         def streak(c):
-            hf.StoreInput(c.m.sid, "dashboard", ld.dashboard_desc["streak"][c.m.language].format(c.m.streak)).append_value()
+            hf.StoreInput(c.m.sid, "dashboard",
+                          ld.dashboard_desc["streak"][c.m.language].format(c.m.streak)).append_value()
 
 
         @when_all(m.streak <= 1)

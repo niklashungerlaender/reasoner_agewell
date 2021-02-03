@@ -207,7 +207,11 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                             f".rating = 1"),
                         (
                             f"select content{language_code}, template_id from template where daily = "
-                            f"'{purpose}'")]
+                            f"'{purpose}'")],
+               motivational_content = f"SELECT content{language_code} from template where purpose = 'mot_morning' and "
+                                      f"template_id = (Select count(goal_id) from goal where user_id = '{client_id}')",
+               motivational_content_random=f"SELECT content{language_code} from template where purpose = 'mot_morning'"
+
 
                )
 

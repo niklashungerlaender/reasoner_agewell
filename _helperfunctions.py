@@ -70,9 +70,13 @@ def create_question_dict(content_display="", items=""):
 
 
 def create_buttons_dict(button_type="", content="", wait=False, tts="",
-                        language_code="en"):
-    button_dict = {"TYPE": button_type, "CONTENT_DISPLAY": ld.buttons[content][language_code], "WAIT_ON_SUBMIT": wait,
-                   "TTS_ON_CLICK": tts}
+                        language_code="en", open_activity=None):
+    if open_activity is None:
+        button_dict = {"TYPE": button_type, "CONTENT_DISPLAY": ld.buttons[content][language_code],
+                       "WAIT_ON_SUBMIT": wait, "TTS_ON_CLICK": tts}
+    else:
+        button_dict = {"TYPE": button_type, "CONTENT_DISPLAY": ld.buttons[content][language_code], "WAIT_ON_SUBMIT": wait,
+                       "TTS_ON_CLICK": tts, "OPEN_ACTIVITY": open_activity}
     return button_dict
 
 

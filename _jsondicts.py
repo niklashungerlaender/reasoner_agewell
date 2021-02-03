@@ -15,7 +15,7 @@ def get_content(i, pos_t, pos_c, language):
 def create_notification_message(topic="", client_id="", notification_id=1,
                                 title="", content="", questions=[],
                                 buttons=[], instance_id="", notification_name="",
-                                questionnaire_type="", language=""):
+                                questionnaire_type="", language="", notification_background=None):
     nd = {"topic": topic, "properties": {}}
     nd["properties"]["CLIENT_ID"] = client_id
     nd["properties"]["DIMENSION_ID"] = 1
@@ -30,6 +30,8 @@ def create_notification_message(topic="", client_id="", notification_id=1,
     nd["properties"]["BUTTONS"] = buttons
     nd["properties"]["FIREBASE_INSTANCE_ID"] = instance_id
     nd["properties"]["NOTIFICATION_NAME"] = notification_name
+    if notification_background is not None:
+        nd["properties"]["NOTIFICATION_BACKGROUND"] = notification_background
 
 
     return nd
@@ -67,14 +69,9 @@ def create_activity_types_edit_response(topic="", activity_id="", client_id="", 
         print(e)
 
 
-def create_dashboard_response(topic="", client_id="", type="",
-                              language="", content_display="",
-                              title_display="", legend=[], data=[]):
+def create_dashboard_response(topic="", client_id="",
+                              language="", charts=""):
     try:
-        charts = [
-            {"TYPE":type, "TITLE_DISPLAY":title_display, "CONTENT_DISPLAY":content_display,
-            "LEGEND": legend, "DATA": data}
-            ]
         nd = {"topic": topic, "properties": {}}
         nd["properties"]["CLIENT_ID"] = client_id
         nd["properties"]["DIMENSION_ID"] = 1
