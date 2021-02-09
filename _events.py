@@ -82,6 +82,7 @@ with ruleset('firstgoal/intern'):
             content = query_content[1][0]
             buttons = [hf.create_buttons_dict(button_type="ok", content="ok", language_code=language_code, wait=True)]
             topic = f"eu/agewell/event/reasoner/notification/message"
+            notification_id = str(uuid.uuid1().int)
             message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
                                                           title=title, content=content,
                                                           buttons=buttons,
@@ -1482,6 +1483,7 @@ with flowchart('ipaq/questionnaire'):
                                                               notification_name=s.notification_name,
                                                               language=c.m.language_code)
                 publish_message(c.m.client_id, s.topic, message_dict)
+                hf.StoreInput(c.m.sid).delete_entry()
                 sql_statement = f"SELECT value_mpam from user_info WHERE user_id='{c.m.client_id}'"
                 mpam_done = db.DbQuery(sql_statement, "query_one").create_thread()
                 if mpam_done is None:
@@ -1493,8 +1495,10 @@ with flowchart('ipaq/questionnaire'):
                 print(e)
 
 
-        to('go_to_mpam').when_all(m.button_type == 'ok', m.mpam == 0)
-        to('delete_ipaq_state').when_all(m.button_type == 'ok', m.mpam == 1)
+        to('go_to_mpam').when_all(c.first << m.button_type == 'ok',
+                                  c.second << m.mpam == 0)
+        to('delete_ipaq_state').when_all(c.first << m.button_type == 'ok',
+                                         c.second << m.mpam == 1)
 
     with stage('delete_ipaq_state'):
         @run
@@ -1504,8 +1508,11 @@ with flowchart('ipaq/questionnaire'):
     with stage('go_to_mpam'):
         @run
         def show_credits(c):
-            hf.StoreInput(c.m.sid).delete_entry()
-            post("mpam/questionnaire", {"sid": c.m.sid, "client_id": c.m.client_id, "language_code": c.m.language_code})
+            try:
+                post("mpam/questionnaire", {"sid": c.first.sid, "client_id": c.first.client_id,
+                                            "language_code": c.first.language_code})
+            except Exception as e:
+                print (e)
 
 with flowchart('mpam/questionnaire'):
     with stage("input"):
