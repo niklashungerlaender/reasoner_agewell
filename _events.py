@@ -229,7 +229,7 @@ with ruleset('creditsinformation/request'):
                                               activity_id=c.m.activity_id), "query_all").create_thread()
             active_mets = sum(i[0] * i[1] for i in active_mets)
             left_mets = weekly_goal_mets - (met_calculation + active_mets)
-            if left_mets > 50:
+            if left_mets > 0:
                 scnd_msg = "credits_information_more"
                 mets_msg = left_mets
             elif left_mets < -50:
@@ -559,8 +559,8 @@ with ruleset('user/activities/request'):
                                                                                                  weekly_goal_mets)
             else:
                 text_to_speech_main = ld.text_to_speech["day_off"][c.m.language_code].format(nickname)
-                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(done_mets,
-                                                                                                 allocated_mets,
+                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(allocated_mets,
+                                                                                                 done_mets,
                                                                                                  weekly_goal_mets)
 
             text_to_speech_sub = ld.text_to_speech["goal_info"][c.m.language_code]
