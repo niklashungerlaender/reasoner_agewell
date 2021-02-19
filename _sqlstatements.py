@@ -3,7 +3,7 @@ from datetime import date
 
 def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
           nickname="", morning_not=0, evening_not=0, notification_name="", activity_id=0, purpose="",
-          duration=0, date_task="", gender=None):
+          duration=0, date_task="", gender=None, mot_count = 0):
     dic = dict(get_language=f"SELECT language from user_info WHERE user_id = '{client_id}'",
                update_language=f"UPDATE user_info SET language = '{language_code}' WHERE user_id = '{client_id}'",
                insert_clientid=f"INSERT INTO user_info(user_id) VALUES ('{client_id}') ON CONFLICT DO NOTHING",
@@ -208,8 +208,12 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                         (
                             f"select content{language_code}, template_id from template where daily = "
                             f"'{purpose}'")],
+               get_motivation_count = f"select count_motivation_message from user_info where user_id ='{client_id}'",
+               insert_message_count = f"UPDATE user_info SET count_motivation_message = {mot_count} WHERE user_id = " 
+                                      f"'{client_id}'",
                motivational_content = f"SELECT content{language_code} from template where purpose = 'mot_morning' and "
-                                      f"template_id = (Select count(goal_id) from goal where user_id = '{client_id}')",
+                                      f"template_id = (Select count_motivation_message from user_info where user_id = " 
+                                      f"'{client_id}')",
                motivational_content_random=f"SELECT content{language_code} from template where purpose = 'mot_morning'"
 
 

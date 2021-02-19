@@ -382,9 +382,10 @@ with ruleset('user/activities/request'):
                 run_time = run_time.replace(hour=23, minute=59, second=59)
                 db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time),
                            "insert").create_thread()
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+                # not needed because added automatically every week
+                """_schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
                                             trigger="date", run_date=run_time,
-                                            args=["goal", c.m.client_id])
+                                            args=["goal", c.m.client_id])"""
 
             # query variables
             weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
@@ -616,7 +617,7 @@ with ruleset('user/dashboard/request'):
                  "LEGEND": legend, "DATA": data}
             ]
             c.post({"client_id": c.m.client_id, "language_code": c.m.language_code,
-                                              "mood": True, "charts":charts})
+                    "mood": True, "charts": charts})
         except Exception as e:
             print(e)
 
@@ -627,8 +628,8 @@ with ruleset('user/dashboard/request'):
             chart_type = "MOOD"
             title_display = ld.dashboard["mood"][c.m.language_code]
             legend = [ld.dashboard["morning"][c.m.language_code], ld.dashboard["evening"][c.m.language_code]]
-            sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where " 
-                            f"time_of_day='evening' and user_id = '{c.m.client_id}'")
+            sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where "
+                             f"time_of_day='evening' and user_id = '{c.m.client_id}'")
             mood_evening = dict(db.DbQuery(sql_statement, "query_all").create_thread())
             sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where "
                              f"time_of_day='morning' and user_id = '{c.m.client_id}'")
@@ -644,7 +645,7 @@ with ruleset('user/dashboard/request'):
                 for key, values in d.items():
                     dd[key].append(values)
             dd = dict(sorted(dd.items()))
-            #dd = {"Today" if k == 0 else k: v for k, v in dd.items()}
+            # dd = {"Today" if k == 0 else k: v for k, v in dd.items()}
             data = []
             for x, y in dd.items():
                 z = {"X": x, "Y": y}
@@ -660,7 +661,7 @@ with ruleset('user/dashboard/request'):
                                                         language=c.m.language_code,
                                                         charts=charts)
             publish_message(c.m.client_id, topic, message_dict)
-            #notification_id_2 = str(uuid.uuid1().int)
+            # notification_id_2 = str(uuid.uuid1().int)
             """run_time_mood_daily = datetime.now() + timedelta(seconds=1)
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
                                         trigger="date", run_date=run_time_mood_daily,
@@ -1512,7 +1513,7 @@ with flowchart('ipaq/questionnaire'):
                 post("mpam/questionnaire", {"sid": c.first.sid, "client_id": c.first.client_id,
                                             "language_code": c.first.language_code})
             except Exception as e:
-                print (e)
+                print(e)
 
 with flowchart('mpam/questionnaire'):
     with stage("input"):
@@ -1578,11 +1579,17 @@ with flowchart('mpam/questionnaire'):
                 print(e)
 
 with ruleset('motivation/weekly'):
-    @when_all(+m.client_id)
+    @when_all(+m.scheduler_id)
     def send_motivation_text(c):
         try:
-            run_time_mot_messages = datetime.now() + timedelta(seconds=5)
-            notification_id = uuid.uuid1().int
+            reminder_id_morning = db.DbQuery(ss.query("get_morning_not_id", client_id=c.m.client_id),
+                                             "query_one").create_thread()
+            if reminder_id_morning is None:
+                reminder_id_morning = 0
+            run_time_mot_messages = datetime.today() + timedelta(days=4)
+            run_time_mot_messages = datetime.combine(run_time_mot_messages, hf.get_reminder_time("morning",
+                                                                                            reminder_id_morning))
+            notification_id = str(uuid.uuid1().int)
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
                                         trigger="date", run_date=run_time_mot_messages,
                                         args=["motivation/weekly", c.m.client_id])
@@ -1590,6 +1597,13 @@ with ruleset('motivation/weekly'):
             notification_name = "motivation/weekly"
             language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
             try:
+                message_count = db.DbQuery(ss.query("get_motivation_count", client_id=c.m.client_id),
+                                           "query_one").create_thread()
+                if message_count is None:
+                    message_count = 0
+                message_count += 1
+                db.DbQuery(ss.query("insert_message_count", client_id=c.m.client_id, mot_count=message_count),
+                           "insert").create_thread()
                 content = db.DbQuery(
                     ss.query("motivational_content", language_code=language_code, client_id=c.m.client_id),
                     "query_one").create_thread()
@@ -1658,6 +1672,7 @@ with ruleset('mood/morning'):
         db.DbQuery(sql_statement, "insert").create_thread()
 
         c.delete_state()
+
 
     @when_all(m.button_type == "cancel")
     def delete_mot_state(c):
