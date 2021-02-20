@@ -15,7 +15,7 @@ from collections import defaultdict
 
 
 # schedules notifications for weekly goals from ruleset firstgoal/intern and flowchart goal
-def execute_scheduler_job(scheduler_event, client_id, scheduler_id=None, **kwargs):
+def execute_scheduler_job(scheduler_event, client_id, scheduler_id=999, **kwargs):
     notification_id = uuid.uuid1().int
     language_code = db.DbQuery(ss.query("get_language", client_id=client_id), "query_one").create_thread()
 
