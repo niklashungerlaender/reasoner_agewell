@@ -266,9 +266,9 @@ with ruleset('user/activity/message'):
             reminder_id_evening = db.DbQuery(ss.query("get_evening_not_id", client_id=c.m.client_id),
                                              "query_one").create_thread()
             if reminder_id_morning is None:
-                reminder_id_morning = 0
+                reminder_id_morning = "not_defined"
             if reminder_id_evening is None:
-                reminder_id_evening = 0
+                reminder_id_evening = "not_defined"
             try:
                 test_if_emty = c.m.selected_days[0]
                 start_date = db.DbQuery(ss.query("get_goal_startdate", client_id=c.m.client_id),
@@ -1631,7 +1631,7 @@ with ruleset('mood/morning'):
             reminder_id_morning = db.DbQuery(ss.query("get_morning_not_id", client_id=c.m.client_id),
                                              "query_one").create_thread()
             if reminder_id_morning is None:
-                reminder_id_morning = 0
+                reminder_id_morning = "not_defined"
             run_time_morning = datetime.today() + timedelta(days=1)
             date_for_scheduler = datetime.combine(run_time_morning, hf.get_reminder_time("morning",
                                                                                          reminder_id_morning))
@@ -1664,11 +1664,11 @@ with ruleset('mood/morning'):
 
     @when_all(m.button_type == "ok")
     def get_feedback(c):
-        print(c.m.questionnaire_answers[0]["ITEMS"][0]["SELECTED_OPTION_IDS"][0])
-
         sql_statement = (f"INSERT INTO mood_daily(user_id, value_mood, date_mood, time_of_day) VALUES "
                          f"('{c.m.client_id}',{c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}, "
-                         f"'{datetime.today()}', 'morning')")
+                         f"'{datetime.today()}', 'morning') ON CONFLICT ON CONSTRAINT "
+                             f"mood_daily_date_mood_user_id_time_of_day_key "
+                             f"DO UPDATE SET value_mood= {c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}")
         db.DbQuery(sql_statement, "insert").create_thread()
 
         c.delete_state()
@@ -1685,7 +1685,7 @@ with ruleset('mood/evening'):
             reminder_id_evening = db.DbQuery(ss.query("get_evening_not_id", client_id=c.m.client_id),
                                              "query_one").create_thread()
             if reminder_id_evening is None:
-                reminder_id_evening = 0
+                reminder_id_evening = "not_defined"
             run_time_evening = datetime.today() + timedelta(days=1)
             date_for_scheduler = datetime.combine(run_time_evening, hf.get_reminder_time("evening",
                                                                                          reminder_id_evening))

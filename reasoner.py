@@ -12,7 +12,7 @@ def main():
     db.connect_to_db(database_login["user"], database_login["password"], database_login["host"],
                      database_login["port"], database_login["database"])
     client = client_connection
-    logging.basicConfig()
+    logging.basicConfig(filename='apscheduler.log', level=logging.DEBUG)
     logging.getLogger('apscheduler').setLevel(logging.DEBUG)
     _schedule.scheduler.start()
     client.loop_forever()
