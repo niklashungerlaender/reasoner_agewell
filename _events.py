@@ -554,8 +554,8 @@ with ruleset('user/activities/request'):
 
             elif len(activity_done_today) > 0:
                 text_to_speech_main = ld.text_to_speech["on_track"][c.m.language_code].format(nickname)
-                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(done_mets,
-                                                                                                 allocated_mets,
+                title_display = ld.title_goal_screen["weekly_credits"][c.m.language_code].format(allocated_mets,
+                                                                                                 done_mets,
                                                                                                  weekly_goal_mets)
             else:
                 text_to_speech_main = ld.text_to_speech["day_off"][c.m.language_code].format(nickname)
@@ -641,14 +641,15 @@ with ruleset('user/dashboard/request'):
             for i in mood_morning.keys():
                 if i not in mood_evening.keys():
                     mood_evening[i] = -1
-            for d in (mood_morning, mood_evening):
-                for key, values in d.items():
-                    dd[key].append(values)
+            ds = [mood_morning, mood_evening]
+            dd = {}
+            for k in mood_morning.keys():
+                dd[k] = list(dd[k] for dd in ds)
             dd = dict(sorted(dd.items()))
             # dd = {"Today" if k == 0 else k: v for k, v in dd.items()}
             data = []
             for x, y in dd.items():
-                z = {"X": x, "Y": y}
+                z = {"X": -x, "Y": y}
                 data.append(z)
             topic = "eu/agewell/event/reasoner/user/dashboard/response"
             x_axis_label = ld.dashboard["days"][c.m.language_code]
