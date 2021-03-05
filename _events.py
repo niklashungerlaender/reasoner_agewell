@@ -100,31 +100,25 @@ with ruleset('preference/message'):
     @when_all(+m.client_id)
     def insert_user_preferences(c):
         try:
-            check_user_id = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
-            if check_user_id:
+            db.DbQuery(ss.query("update_user_info", client_id=c.m.client_id, language_code=c.m.language_code,
+                                age=c.m.preferences['userYearOfBirth'],
+                                nickname=c.m.preferences['userName'],
+                                morning_not=c.m.preferences['reminderTimeIndex'],
+                                evening_not=c.m.preferences['questionnaireTimeIndex'],
+                                gender=c.m.preferences['userGender']), "insert").create_thread()
+            try:
+                update_notification_time = [(ss.query("update_notification", client_id=c.m.client_id,
+                                                      notification_name="morning_notification"),
+                                             "morning", c.m.preferences['reminderTimeIndex']),
+                                            (ss.query("update_notification", client_id=c.m.client_id,
+                                                      notification_name="evening_notification"),
+                                             "evening", c.m.preferences['questionnaireTimeIndex'])]
+                for i in update_notification_time:
+                    scheduler_ids = db.DbQuery(i[0], "query_all").create_thread()
+                    hf.update_notification_time(scheduler_ids, i[1], i[2])
 
-                db.DbQuery(ss.query("update_user_info", client_id=c.m.client_id, language_code=c.m.language_code,
-                                    age=c.m.preferences['userYearOfBirth'],
-                                    nickname=c.m.preferences['userName'],
-                                    morning_not=c.m.preferences['reminderTimeIndex'],
-                                    evening_not=c.m.preferences['questionnaireTimeIndex'],
-                                    gender=c.m.preferences['userGender']), "insert").create_thread()
-                try:
-                    update_notification_time = [(ss.query("update_notification", client_id=c.m.client_id,
-                                                          notification_name="morning_notification"),
-                                                 "morning", c.m.preferences['reminderTimeIndex']),
-                                                (ss.query("update_notification", client_id=c.m.client_id,
-                                                          notification_name="evening_notification"),
-                                                 "evening", c.m.preferences['questionnaireTimeIndex'])]
-                    for i in update_notification_time:
-                        scheduler_ids = db.DbQuery(i[0], "query_all").create_thread()
-                        hf.update_notification_time(scheduler_ids, i[1], i[2])
-
-                except Exception as e:
-                    print(e)
-            else:
-                post("create/clientid/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
-
+            except Exception as e:
+                print(e)
         except Exception as e:
             print(e)
 
@@ -329,6 +323,10 @@ with ruleset('dimension/request'):
     @when_all(+m.client_id)
     def get_dimension_info(c):
         try:
+            check_user_id = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            print(check_user_id)
+            if check_user_id is None:
+                post("create/clientid/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
             content = db.DbQuery(ss.query("get_dimension_request_content", language_code=c.m.language_code),
                                  "query_all").create_thread()
             weekly_goal_mets = db.DbQuery(ss.query("get_weekly_mets", client_id=c.m.client_id),
@@ -1589,7 +1587,7 @@ with ruleset('motivation/weekly'):
                 reminder_id_morning = 0
             run_time_mot_messages = datetime.today() + timedelta(days=4)
             run_time_mot_messages = datetime.combine(run_time_mot_messages, hf.get_reminder_time("morning",
-                                                                                            reminder_id_morning))
+                                                                                                 reminder_id_morning))
             notification_id = str(uuid.uuid1().int)
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
                                         trigger="date", run_date=run_time_mot_messages,
@@ -1668,8 +1666,8 @@ with ruleset('mood/morning'):
         sql_statement = (f"INSERT INTO mood_daily(user_id, value_mood, date_mood, time_of_day) VALUES "
                          f"('{c.m.client_id}',{c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}, "
                          f"'{datetime.today()}', 'morning') ON CONFLICT ON CONSTRAINT "
-                             f"mood_daily_date_mood_user_id_time_of_day_key "
-                             f"DO UPDATE SET value_mood= {c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}")
+                         f"mood_daily_date_mood_user_id_time_of_day_key "
+                         f"DO UPDATE SET value_mood= {c.m.questionnaire_answers[0]['ITEMS'][0]['SELECTED_OPTION_IDS'][0]}")
         db.DbQuery(sql_statement, "insert").create_thread()
 
         c.delete_state()
