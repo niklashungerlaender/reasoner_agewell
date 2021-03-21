@@ -58,7 +58,7 @@ with ruleset('firstgoal/intern'):
             run_time = datetime.now() + timedelta(days=6)
             run_time = run_time.replace(hour=23, minute=59, second=59)
             run_time_mot_messages = datetime.now() + timedelta(days=3)
-            run_time_mot_messages = run_time_mot_messages.replace(hour=10, minute=00)
+            run_time_mot_messages = run_time_mot_messages.replace(hour=9, minute=00)
             run_time_mood_daily = datetime.now() + timedelta(days=1)
             run_time_mood_morning = run_time_mood_daily.replace(hour=10, minute=00)
             run_time_mood_evening = run_time_mood_daily.replace(hour=20, minute=00)
@@ -498,7 +498,21 @@ with ruleset('user/activities/request'):
                 goal_text += goalinfo_days + goalinfo_info + goalinfo_extra
                 index_for_activity = [x for x, y in enumerate(activity_content) if
                                       y[0] == i["activity_name_english"]][0]
-                random_content = randint(0, len(activity_content[index_for_activity][2]) - 1)
+                random_content_number = randint(0, len(activity_content[index_for_activity][2]) - 1)
+                random_activity_content = activity_content[index_for_activity][1][random_content_number]
+                try:
+                    get_youtube_link = db.DbQuery(ss.query("get_links", client_id=c.m.client_id,
+                                                           string_to_match=random_activity_content,
+                                                           language_code=c.m.language_code),
+                                                  "query_one").create_thread()
+                    print (get_youtube_link)
+                except:
+                    get_youtube_link = None
+                if get_youtube_link is None or len(get_youtube_link)==0:
+                    get_youtube_link = []
+                else:
+                    get_youtube_link = [i.split("=", 1)[1] for i in list(filter(None, get_youtube_link.split(' ')))]
+
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
                                      "CREDIT_DONE": i["activity_duration"] * i["met_value"] * i["activities_done"],
@@ -506,13 +520,13 @@ with ruleset('user/activities/request'):
                                          ("**" +
                                           ld.content_title[
                                               activity_content[index_for_activity][2]
-                                              [random_content]][c.m.language_code] + "**",
-                                          activity_content[index_for_activity][1]
-                                          [random_content]))),
+                                              [random_content_number]][c.m.language_code] + "**",
+                                          hf.parse_hyperlink(random_activity_content, ld.link_text[c.m.language_code])))),
                                      "CONTENT_TEXT_TO_SPEECH": i["text_to_speech"],
                                      "CONTENT_IMAGE": i["url"],
                                      "ACTIVE_TODAY": i["active_today"],
-                                     "KEYWORD": i["keyword"]
+                                     "KEYWORD": i["keyword"],
+                                     "CONTENT_VIDEO": get_youtube_link
                                      }
                 activity_list.append(dict_for_activity)
 
@@ -632,7 +646,6 @@ with ruleset('user/dashboard/request'):
             sql_statement = (f"SELECT abs(date_mood - CURRENT_DATE) as days, value_mood from mood_daily where "
                              f"time_of_day='morning' and user_id = '{c.m.client_id}'")
             mood_morning = dict(db.DbQuery(sql_statement, "query_all").create_thread())
-            dd = defaultdict(list)
             for i in mood_evening.keys():
                 if i not in mood_morning.keys():
                     mood_morning[i] = -1
@@ -649,6 +662,7 @@ with ruleset('user/dashboard/request'):
             for x, y in dd.items():
                 z = {"X": -x, "Y": y}
                 data.append(z)
+            data.reverse()
             topic = "eu/agewell/event/reasoner/user/dashboard/response"
             x_axis_label = ld.dashboard["days"][c.m.language_code]
             charts = [

@@ -69,8 +69,29 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                  "yoga": dict(en="Yoga", de="Yoga", it="Yoga", nl="Yoga"),
                  "strength": dict(en="Strength training", de="Krafttraining", it="Allenamento della forza",
                                   nl="Krachttraining"),
-                 "activity": dict(en="Physical Activity", de="Körperliche Aktivität", it="Attività Fisica",
-                                  nl="Beweegactiviteit")
+                 "dancing": dict(en="Dancing", de="Tanzen", it="Danzare", nl="Dansen"),
+                 "vacuum": dict(en="Vacuum cleaning", de="Staubsaugen", it="Passare l'aspirapolvere", nl="Stofzuigen"),
+                 "clean": dict(en="Cleaning", de="Putzen", it="Pulizie della casa ",
+                                   nl="Schoonmaken"),
+                 "do dishes": dict(en="Dishwashing", de="Geschirr spülen", it="Pulire i piatti", nl="Afwassen"),
+                 "ironing": dict(en="Ironing", de="Bügeln", it="Stirare",
+                                  nl="Strijken"),
+                 "mow lawn": dict(en="Mow the lawn", de="Rasenmähen", it="Giardinaggio", nl="Grasmaaien"),
+                 "gardening": dict(en="Gardening", de="Spazieren gehen", it="A passeggio", nl="Tuinieren"),
+                 "golf": dict(en="Golf", de="Golf", it="Golf",
+                                   nl="Gol"),
+                 "gymnastics": dict(en="Gymnastics", de="Gymnastik", it="Ginnastica dolce", nl="Gymnastiek"),
+                 "horse riding": dict(en="Horse riding", de="reiten", it="Equitazione",
+                                  nl="Rijden"),
+                 "tennis": dict(en="Tennis", de="Tennis", it="Tennis", nl="Tennis"),
+                 "hiking": dict(en="Hiking", de="Wandern", it="Escursionismo", nl="Hiken"),
+                 "swimming": dict(en="Swimming", de="Schwimmen", it="Nuoto",
+                                   nl="Zwemmen"),
+                 "water aerobic": dict(en="Water aerobic", de="Wassergymnastik", it="Acqua gym", nl="Aquafitness"),
+                 "archery": dict(en="Archery", de="Bogenschießen", it="Tiro con l'arco",
+                                  nl="Boogschieten"),
+                 "tai chi": dict(en="Tai Chi", de="Tai Chi", it="Tai Chi",
+                                  nl="Tai Chi")
                  }
 and_name = dict(en="and", de="und", it="e", nl="en")
 
@@ -96,6 +117,8 @@ mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heu
         "evening": dict(en="How was your day?", de="Wie war dein Tag?", it="Com'è andata la tua giornata?",
                         nl="How was your day?")
         }
+link_text = dict(en="", de="", it="[clicca qui]", nl="[klik hier]")
+
 dashboard = {"days": dict(en="Days", de="Tage", it="Giorni", nl="Dagen"),
              "goal": dict(en="Goal", de="Ziel", it="Obiettivo", nl="Doel"),
              "achieved": dict(en="Achieved", de="Geschafft", it="Raggiunti", nl="Behaald"),

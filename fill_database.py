@@ -5,26 +5,26 @@ from configparser import ConfigParser
 def connect_to_db():
     try:
         config_object = ConfigParser()
-        config_object.read("config.ini")
+        config_object.read("config_production.ini")
         database_login = config_object["Postgres"]
-        connection = psycopg2.connect(user = database_login["user"],
-                                      password = database_login["password"],
-                                      host = database_login["host"],
-                                      port = database_login["port"],
-                                      database = database_login["database"])
+        connection = psycopg2.connect(user=database_login["user"],
+                                      password=database_login["password"],
+                                      host=database_login["host"],
+                                      port=database_login["port"],
+                                      database=database_login["database"])
 
         cursor = connection.cursor()
         # Print PostgreSQL Connection properties
-        print ( connection.get_dsn_parameters(),"\n")
+        print(connection.get_dsn_parameters(), "\n")
 
         # Print PostgreSQL version
         cursor.execute("SELECT version();")
         record = cursor.fetchone()
-        print("You are connected to - ", record,"\n")
+        print("You are connected to - ", record, "\n")
         return connection, cursor
 
-    except (Exception, psycopg2.Error) as error :
-        print ("Error while connecting to PostgreSQL", error)
+    except (Exception, psycopg2.Error) as error:
+        print("Error while connecting to PostgreSQL", error)
 
 
 def create_tables(connection, cursor):
@@ -60,7 +60,9 @@ def create_tables(connection, cursor):
                 difficulty TEXT,
                 purpose TEXT,
                 activity TEXT,
-                category TEXT
+                category TEXT,
+                videoit TEXT,
+                videonl TEXT
                 )
         """,
         """ CREATE TABLE notification (
@@ -152,11 +154,32 @@ def create_tables(connection, cursor):
 
 
 def insert_activities(connection, cursor):
-    activities = {"cycling": (6, [20, 30, 40, 50], "https://proself.org/storage/images/ait/cycling.jpg"),
-                         "walking": (3, [30, 40, 50, 60], "https://proself.org/storage/images/ait/walking.jpg"),
-                         "shoveling": (6, [10, 20, 30], "https://proself.org/storage/images/ait/shoveling.jpg"),
-                         "yoga": (3, [10, 20, 30, 40], "https://proself.org/storage/images/ait/yoga.jpg"),
-                         "strength": (6, [20, 30, 40, 50], "https://proself.org/storage/images/ait/strenght.jpg")}
+    #already inserted
+    """
+    "cycling": (6, [20, 30, 40, 50], "https://proself.org/storage/images/ait/cycling.jpg"),
+                  "walking": (3, [30, 40, 50, 60], "https://proself.org/storage/images/ait/walking.jpg"),
+                  "shoveling": (6, [10, 20, 30], "https://proself.org/storage/images/ait/shoveling.jpg"),
+                  "yoga": (3, [10, 20, 30, 40], "https://proself.org/storage/images/ait/yoga.jpg"),
+                  "strength": (6, [20, 30, 40, 50], "https://proself.org/storage/images/ait/strenght.jpg")
+    """
+    activities = {
+                  "dancing": (4.5, [20, 30, 40, 50], "https://proself.org/storage/images/ait/dancing.jpg"),
+                  "vacuum": (3.5, [30, 40, 50, 60], "https://proself.org/storage/images/ait/vacuumcleaning.jpg"),
+                  "clean": (3, [10, 20, 30], "https://proself.org/storage/images/ait/cleaning.jpg"),
+                  "do dishes": (2.3, [10, 20, 30, 40], "https://proself.org/storage/images/ait/dishwashing.jpg"),
+                  "ironing": (2.3, [20, 30, 40, 50], "https://proself.org/storage/images/ait/ironing.jpg"),
+                  "mow lawn": (5.5, [20, 30, 40, 50], "https://proself.org/storage/images/ait/mowinglawn.jpg"),
+                  "gardening": (4, [30, 40, 50, 60], "https://proself.org/storage/images/ait/gardening.jpg"),
+                  "golf": (4.5, [10, 20, 30], "https://proself.org/storage/images/ait/golf.jpg"),
+                  "gymnastics": (4, [10, 20, 30, 40], "https://proself.org/storage/images/ait/gymnastics.jpg"),
+                  "horse riding": (5, [20, 30, 40, 50], "https://proself.org/storage/images/ait/horseriding.jpg"),
+                  "tennis": (7, [20, 30, 40, 50], "https://proself.org/storage/images/ait/tennis.jpg"),
+                  "hiking": (6, [30, 40, 50, 60], "https://proself.org/storage/images/ait/hiking.jpg"),
+                  "swimming": (6, [10, 20, 30], "https://proself.org/storage/images/ait/swimming.jpg"),
+                  "water aerobic": (4, [10, 20, 30, 40], "https://proself.org/storage/images/ait/wateraerobic.jpg"),
+                  "archery": (3.5, [20, 30, 40, 50], "https://proself.org/storage/images/ait/archery.jpg"),
+                  "tai chi": (3, [20, 30, 40, 50], "https://proself.org/storage/images/ait/taichi.jpg")
+                  }
     for k, v in activities.items():
         try:
             cursor.execute(
@@ -168,15 +191,15 @@ def insert_activities(connection, cursor):
 
 
 def insert_templates(connection, cursor):
-        with open('motivational_messages.csv', 'r', encoding="utf-8") as f:
-            next(f) # Skip the header row.
-            cursor.copy_from(f, 'template', sep=';')
-        connection.commit()
+    with open('motivational_messages.csv', 'r', encoding="utf-8") as f:
+        next(f)  # Skip the header row.
+        cursor.copy_from(f, 'template', sep=';')
+    connection.commit()
 
 
 def main():
     connection, cursor = connect_to_db()
-    create_tables(connection,cursor)
+    # create_tables(connection,cursor)
     insert_activities(connection, cursor)
     insert_templates(connection, cursor)
     cursor.close()
