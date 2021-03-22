@@ -28,6 +28,7 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                                                first_goal_text}'::TEXT[]) WITH ORDINALITY t(purpose, ord)
                                                USING (purpose) ORDER  BY t.ord""",
                get_user_id=f"SELECT user_id from user_info WHERE user_id = '{client_id}'",
+               get_goal_id_user = f"SELECT goal_id from goal where user_id = '{client_id}'",
                get_gender=f"SELECT gender from user_info WHERE user_id = '{client_id}'",
                update_user_info=f"UPDATE user_info SET age = {age}, "
                                 f"nickname = '{nickname}',"

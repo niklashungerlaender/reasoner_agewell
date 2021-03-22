@@ -51,47 +51,49 @@ with ruleset('firstgoal/intern'):
     @when_all(+m.client_id)
     def create_goal_notification(c):
         try:
-            notification_id = str(uuid.uuid1().int)
-            notification_id_2 = str(uuid.uuid1().int)
-            notification_id_3 = str(uuid.uuid1().int)
-            notification_id_4 = str(uuid.uuid1().int)
-            run_time = datetime.now() + timedelta(days=6)
-            run_time = run_time.replace(hour=23, minute=59, second=59)
-            run_time_mot_messages = datetime.now() + timedelta(days=3)
-            run_time_mot_messages = run_time_mot_messages.replace(hour=9, minute=00)
-            run_time_mood_daily = datetime.now() + timedelta(days=1)
-            run_time_mood_morning = run_time_mood_daily.replace(hour=10, minute=00)
-            run_time_mood_evening = run_time_mood_daily.replace(hour=20, minute=00)
-            db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time), "insert").create_thread()
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
-                                        trigger="date", run_date=run_time,
-                                        args=["goal", c.m.client_id])
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4,
-                                        trigger="date", run_date=run_time_mot_messages,
-                                        args=["motivation/weekly", c.m.client_id])
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
-                                        trigger="date", run_date=run_time_mood_morning,
-                                        args=["mood/morning", c.m.client_id])
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3,
-                                        trigger="date", run_date=run_time_mood_evening,
-                                        args=["mood/evening", c.m.client_id])
-            language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
-            query_content = db.DbQuery(ss.query("get_firstgoal_content", language_code=c.m.language_code),
-                                       "query_all").create_thread()
-            title = query_content[0][0]
-            content = query_content[1][0]
-            buttons = [hf.create_buttons_dict(button_type="ok", content="ok", language_code=language_code, wait=True)]
-            topic = f"eu/agewell/event/reasoner/notification/message"
-            notification_id = str(uuid.uuid1().int)
-            message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
-                                                          title=title, content=content,
-                                                          buttons=buttons,
-                                                          language=language_code,
-                                                          notification_name="ipaq/questionnaire",
-                                                          notification_id=notification_id)
-            print(message_dict)
+            check_goal_id = db.DbQuery(ss.query("get_goal_id_user", client_id=c.m.client_id), "query_one").create_thread()
+            if check_goal_id is None:
+                notification_id = str(uuid.uuid1().int)
+                notification_id_2 = str(uuid.uuid1().int)
+                notification_id_3 = str(uuid.uuid1().int)
+                notification_id_4 = str(uuid.uuid1().int)
+                run_time = datetime.now() + timedelta(days=6)
+                run_time = run_time.replace(hour=23, minute=59, second=59)
+                run_time_mot_messages = datetime.now() + timedelta(days=3)
+                run_time_mot_messages = run_time_mot_messages.replace(hour=9, minute=00)
+                run_time_mood_daily = datetime.now() + timedelta(days=1)
+                run_time_mood_morning = run_time_mood_daily.replace(hour=10, minute=00)
+                run_time_mood_evening = run_time_mood_daily.replace(hour=20, minute=00)
+                db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time), "insert").create_thread()
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+                                            trigger="date", run_date=run_time,
+                                            args=["goal", c.m.client_id])
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4,
+                                            trigger="date", run_date=run_time_mot_messages,
+                                            args=["motivation/weekly", c.m.client_id])
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
+                                            trigger="date", run_date=run_time_mood_morning,
+                                            args=["mood/morning", c.m.client_id])
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3,
+                                            trigger="date", run_date=run_time_mood_evening,
+                                            args=["mood/evening", c.m.client_id])
+                language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+                query_content = db.DbQuery(ss.query("get_firstgoal_content", language_code=c.m.language_code),
+                                           "query_all").create_thread()
+                title = query_content[0][0]
+                content = query_content[1][0]
+                buttons = [hf.create_buttons_dict(button_type="ok", content="ok", language_code=language_code, wait=True)]
+                topic = f"eu/agewell/event/reasoner/notification/message"
+                notification_id = str(uuid.uuid1().int)
+                message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
+                                                              title=title, content=content,
+                                                              buttons=buttons,
+                                                              language=language_code,
+                                                              notification_name="ipaq/questionnaire",
+                                                              notification_id=notification_id)
+                print(message_dict)
 
-            publish_message(c.m.client_id, topic, message_dict)
+                publish_message(c.m.client_id, topic, message_dict)
         except Exception as e:
             print(e)
 
@@ -511,7 +513,8 @@ with ruleset('user/activities/request'):
                 if get_youtube_link is None or len(get_youtube_link)==0:
                     get_youtube_link = []
                 else:
-                    get_youtube_link = [i.split("=", 1)[1] for i in list(filter(None, get_youtube_link.split(' ')))]
+                    get_youtube_link = [i.split("&")[0] for i in [i.split("=", 1)[1] for i in list(filter(None,
+                                                                                                          get_youtube_link.split(' ')))]]
 
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
