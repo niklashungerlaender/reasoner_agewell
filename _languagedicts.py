@@ -91,7 +91,9 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                  "archery": dict(en="Archery", de="Bogenschießen", it="Tiro con l'arco",
                                   nl="Boogschieten"),
                  "tai chi": dict(en="Tai Chi", de="Tai Chi", it="Tai Chi",
-                                  nl="Tai Chi")
+                                  nl="Tai Chi"),
+                 "activity": dict(en="Physical Activity", de="Körperliche Aktivität",it="Attività Fisica",
+                                                  nl="Beweegactiviteit")
                  }
 and_name = dict(en="and", de="und", it="e", nl="en")
 
@@ -117,7 +119,7 @@ mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heu
         "evening": dict(en="How was your day?", de="Wie war dein Tag?", it="Com'è andata la tua giornata?",
                         nl="How was your day?")
         }
-link_text = dict(en="", de="", it="[clicca qui]", nl="[klik hier]")
+link_text = dict(en="", de="", it="[clicca qui])", nl="[klik hier]")
 
 dashboard = {"days": dict(en="Days", de="Tage", it="Giorni", nl="Dagen"),
              "goal": dict(en="Goal", de="Ziel", it="Obiettivo", nl="Doel"),
