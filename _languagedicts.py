@@ -120,7 +120,7 @@ mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heu
                         nl="How was your day?")
         }
 link_text = dict(en="", de="", it="[clicca qui])", nl="[klik hier]")
-
+youtube_text = dict(en="", de="", it=" Video a fondo pagina.", nl=" Kjk de onderstaande video voor instructies.")
 dashboard = {"days": dict(en="Days", de="Tage", it="Giorni", nl="Dagen"),
              "goal": dict(en="Goal", de="Ziel", it="Obiettivo", nl="Doel"),
              "achieved": dict(en="Achieved", de="Geschafft", it="Raggiunti", nl="Behaald"),
@@ -303,7 +303,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "herzien en alsnog een activiteit voor vandaag inplannen. Je kunt ook je energie "
                          "sparen voor de komende dagen."),
                   "activity_missed": dict(
-                      en="Good to see you{}! I see you had tasks in the last days which you were not able to do. "
+                      en="Good to see you {}! I see you had tasks in the last days which you were not able to do. "
                          "No problem, I deleted those tasks for you. Good news is, you got credits back which you can "
                          "use for new "
                          "activities! Make sure to spent them to meet your weekly goal.",

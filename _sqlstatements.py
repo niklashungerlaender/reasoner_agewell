@@ -3,12 +3,13 @@ from datetime import date
 
 def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
           nickname="", morning_not=0, evening_not=0, notification_name="", activity_id=0, purpose="",
-          duration=0, date_task="", gender=None, mot_count = 0, string_to_match = ""):
+          duration=0, date_task="", gender=None, mot_count = 0, activity_name = ""):
     dic = dict(get_language=f"SELECT language from user_info WHERE user_id = '{client_id}'",
+               check_if_user_exists=f"SELECT user_id from user_info WHERE user_id = '{client_id}'",
                update_language=f"UPDATE user_info SET language = '{language_code}' WHERE user_id = '{client_id}'",
                insert_clientid=f"INSERT INTO user_info(user_id) VALUES ('{client_id}') ON CONFLICT DO NOTHING",
                insert_goal=f"INSERT INTO goal(user_id, start_date, end_date, met_required) VALUES "
-                           f"('{client_id}','{date.today()}','{run_time}', {credits})",
+                           f"('{client_id}','{date.today()}','{run_time}', {credits}) ON CONFLICT DO NOTHING",
                insert_activity=f"INSERT INTO activity(user_id, goal_id, type_id) SELECT "
                                f"'{client_id}', (SELECT s.goal_id from goal s where CURRENT_TIMESTAMP between "
                                f"s.start_date and s.end_date "
@@ -103,7 +104,7 @@ def query(key, client_id="", language_code="", run_time="", credits=1000, age=0,
                get_weekly_mets=f"SELECT met_required from goal where CURRENT_TIMESTAMP between start_date and end_date "
                                f"and user_id = '{client_id}'",
                get_content=f"SELECT content{language_code} FROM template WHERE purpose = '{purpose}'",
-               get_links=f"SELECT video{language_code} FROM template WHERE content{language_code} = '{string_to_match}'",
+               get_links=f"SELECT ARRAY_AGG(video{language_code}) FROM template WHERE activity = '{activity_name}'",
                get_active_mets=f"SELECT b.duration, s.met_value from task b "
                                f"INNER JOIN activity m ON b.activity_id = m.activity_id "
                                f"INNER JOIN activity_type s ON s.type_id = m.type_id "

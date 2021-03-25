@@ -68,13 +68,13 @@ with ruleset('firstgoal/intern'):
                 _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
                                             trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4 + c.m.client_id,
                                             trigger="date", run_date=run_time_mot_messages,
                                             args=["motivation/weekly", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2 + c.m.client_id,
                                             trigger="date", run_date=run_time_mood_morning,
                                             args=["mood/morning", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3 + c.m.client_id,
                                             trigger="date", run_date=run_time_mood_evening,
                                             args=["mood/evening", c.m.client_id])
                 language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
@@ -325,8 +325,10 @@ with ruleset('dimension/request'):
     @when_all(+m.client_id)
     def get_dimension_info(c):
         try:
-            check_user_id = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
-            print(check_user_id)
+            check_user_id = db.DbQuery(ss.query("check_if_user_exists", client_id=c.m.client_id), "query_one").create_thread()
+            check_language = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
+            if check_language is None:
+                db.DbQuery(ss.query("update_language", client_id=c.m.client_id, language_code=c.m.language_code), "insert").create_thread()
             if check_user_id is None:
                 post("create/clientid/intern", {"client_id": c.m.client_id, "language_code": c.m.language_code})
             content = db.DbQuery(ss.query("get_dimension_request_content", language_code=c.m.language_code),
@@ -504,18 +506,17 @@ with ruleset('user/activities/request'):
                 random_activity_content = activity_content[index_for_activity][1][random_content_number]
                 try:
                     get_youtube_link = db.DbQuery(ss.query("get_links", client_id=c.m.client_id,
-                                                           string_to_match=random_activity_content,
+                                                           activity_name=i["activity_name_english"],
                                                            language_code=c.m.language_code),
                                                   "query_one").create_thread()
                     print (get_youtube_link)
                 except:
                     get_youtube_link = None
-                if get_youtube_link is None or len(get_youtube_link)==0:
+                if get_youtube_link is None or len(list(filter(None,get_youtube_link)))==0:
                     get_youtube_link = []
                 else:
-                    get_youtube_link = [i.split("&")[0] for i in [i.split("=", 1)[1] for i in list(filter(None,
-                                                                                                          get_youtube_link.split(' ')))]]
-
+                    random_activity_content += ld.youtube_text[c.m.language_code]
+                    get_youtube_link = [i.split("&")[0] for i in [i.split("=", 1)[1] for i in list(filter(None," ".join(get_youtube_link).split(' ')))]]
                 dict_for_activity = {"ID": i["type_id"], "TITLE_DISPLAY": i["activity_name"],
                                      "CREDIT_SCORE": i["activity_duration"] * i["met_value"] * len(i["days"]),
                                      "CREDIT_DONE": i["activity_duration"] * i["met_value"] * i["activities_done"],
@@ -1606,7 +1607,7 @@ with ruleset('motivation/weekly'):
             run_time_mot_messages = datetime.combine(run_time_mot_messages, hf.get_reminder_time("morning",
                                                                                                  reminder_id_morning))
             notification_id = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
                                         trigger="date", run_date=run_time_mot_messages,
                                         args=["motivation/weekly", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
@@ -1652,7 +1653,7 @@ with ruleset('mood/morning'):
             date_for_scheduler = datetime.combine(run_time_morning, hf.get_reminder_time("morning",
                                                                                          reminder_id_morning))
             notification_id_morning = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_morning,
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_morning + c.m.client_id,
                                         trigger="date", run_date=date_for_scheduler,
                                         args=["mood/morning", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
@@ -1706,7 +1707,7 @@ with ruleset('mood/evening'):
             date_for_scheduler = datetime.combine(run_time_evening, hf.get_reminder_time("evening",
                                                                                          reminder_id_evening))
             notification_id_evening = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_evening,
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_evening + c.m.client_id,
                                         trigger="date", run_date=date_for_scheduler,
                                         args=["mood/evening", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
@@ -1759,6 +1760,8 @@ with ruleset('activity/missed'):
         buttons = [hf.create_buttons_dict(button_type="ok", content="ok",
                                           language_code=c.m.language_code)]
         title = ld.title_goal_screen["activity_missed"][c.m.language_code]
+        if c.m.nickname is None:
+            c.m.nickname = ""
         content = ld.text_to_speech["activity_missed"][c.m.language_code].format(c.m.nickname)
         message_dict = jd.create_notification_message(topic=topic, client_id=c.m.client_id,
                                                       notification_id="999",
