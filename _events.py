@@ -970,7 +970,12 @@ with ruleset('notification/morning'):
             nickname = db.DbQuery(ss.query("get_nickname", client_id=s.client_id), "query_one").create_thread()
             personal_greeting = hf.personal_greetings(nickname, s.language_code)
             title = personal_greeting + query_content[1][0]
-            activity_name_message = query_content[2][0].format(s.activity_name, s.kwargs["duration"])
+
+            if s.language_code == "it":
+                activity_name_message = query_content[2][0].format(s.kwargs["duration"], s.activity_name)
+            else:
+                activity_name_message = query_content[2][0].format(s.activity_name, s.kwargs["duration"])
+
             print(activity_name_message, s.content_msg, met_message)
             content = activity_name_message + s.content_msg + met_message
 
