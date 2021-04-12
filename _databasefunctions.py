@@ -77,60 +77,68 @@ class DbQuery:
 
     @staticmethod
     def insert(sql_statement):
-        ps_connection = threaded_postgreSQL_pool.getconn()
-        ps_cursor = ps_connection.cursor()
-        ps_cursor.execute(sql_statement)
-        primary_key = 0
+        ps_connection = None
         try:
-            primary_key = ps_cursor.fetchone()[0]
-        except:
-            pass
-        ps_connection.commit()
-        ps_cursor.close()
-        threaded_postgreSQL_pool.putconn(ps_connection)
-        return primary_key
+            ps_connection = threaded_postgreSQL_pool.getconn()
+            with ps_connection:
+                ps_cursor = ps_connection.cursor()
+                ps_cursor.execute(sql_statement)
+                primary_key = 0
+                try:
+                    primary_key = ps_cursor.fetchone()[0]
+                except:
+                    pass
+                return primary_key
+        finally:
+            if ps_connection:
+                threaded_postgreSQL_pool.putconn(ps_connection)
 
     @staticmethod
     def query_random(sql_statement):
-        ps_connection = threaded_postgreSQL_pool.getconn()
-        ps_cursor = ps_connection.cursor()
-        ps_cursor.execute(sql_statement)
-        result = ps_cursor.fetchall()
-        if len(result) > 1:
-            choose_msg = randint(0, len(result))
-            result = result[choose_msg][1]
-        else:
-            result = result[0][0]
-
-        ps_cursor.close()
-        threaded_postgreSQL_pool.putconn(ps_connection)
-        return result
+        ps_connection = None
+        try:
+            ps_connection = threaded_postgreSQL_pool.getconn()
+            with ps_connection:
+                ps_cursor = ps_connection.cursor()
+                ps_cursor.execute(sql_statement)
+                result = ps_cursor.fetchall()
+                if len(result) > 1:
+                    choose_msg = randint(0, len(result))
+                    result = result[choose_msg][1]
+                else:
+                    result = result[0][0]
+                return result
+        finally:
+            if ps_connection:
+                threaded_postgreSQL_pool.putconn(ps_connection)
 
     @staticmethod
     def query_all(sql_statement):
-        ps_connection = threaded_postgreSQL_pool.getconn()
-        ps_cursor = ps_connection.cursor()
-        ps_cursor.execute(sql_statement)
-        result = ps_cursor.fetchall()
-        ps_connection.commit()
-        ps_cursor.close()
-        threaded_postgreSQL_pool.putconn(ps_connection)
-        return result
+        ps_connection = None
+        try:
+            ps_connection = threaded_postgreSQL_pool.getconn()
+            with ps_connection:
+                ps_cursor = ps_connection.cursor()
+                ps_cursor.execute(sql_statement)
+                result = ps_cursor.fetchall()
+                return result
+        finally:
+            if ps_connection:
+                threaded_postgreSQL_pool.putconn(ps_connection)
 
     @staticmethod
     def query_one(sql_statement):
+        ps_connection = None
         try:
             ps_connection = threaded_postgreSQL_pool.getconn()
-            ps_cursor = ps_connection.cursor()
-            ps_cursor.execute(sql_statement)
-            result = ps_cursor.fetchone()
-            result = result[0]
-            ps_connection.commit()
-            ps_cursor.close()
-            threaded_postgreSQL_pool.putconn(ps_connection)
-            return result
+            with ps_connection:
+                ps_cursor = ps_connection.cursor()
+                ps_cursor.execute(sql_statement)
+                result = ps_cursor.fetchone()
+                result = result[0]
+                return result
         except TypeError:
-            ps_connection.commit()
-            ps_cursor.close()
-            threaded_postgreSQL_pool.putconn(ps_connection)
             return None
+        finally:
+            if ps_connection:
+                threaded_postgreSQL_pool.putconn(ps_connection)
