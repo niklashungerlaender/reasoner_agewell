@@ -504,15 +504,17 @@ with ruleset('user/activities/request'):
                                       y[0] == i["activity_name_english"]][0]
                 random_content_number = randint(0, len(activity_content[index_for_activity][2]) - 1)
                 random_activity_content = activity_content[index_for_activity][1][random_content_number]
-                try:
-                    get_youtube_link = db.DbQuery(ss.query("get_links", client_id=c.m.client_id,
-                                                           activity_name=i["activity_name_english"],
-                                                           language_code=c.m.language_code),
-                                                  "query_one").create_thread()
-                    print (get_youtube_link)
-                except:
-                    get_youtube_link = None
-                if get_youtube_link is None or len(list(filter(None,get_youtube_link)))==0:
+                get_youtube_link = None
+                if c.m.language_code != "de":
+                    try:
+                        get_youtube_link = db.DbQuery(ss.query("get_links", client_id=c.m.client_id,
+                                                               activity_name=i["activity_name_english"],
+                                                               language_code=c.m.language_code),
+                                                      "query_one").create_thread()
+                        print (get_youtube_link)
+                    except:
+                        get_youtube_link = None
+                if get_youtube_link is None or len(list(filter(None,get_youtube_link))) == 0:
                     get_youtube_link = []
                 else:
                     random_activity_content += ld.youtube_text[c.m.language_code]
