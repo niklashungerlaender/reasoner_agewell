@@ -79,10 +79,10 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                  "mow lawn": dict(en="Mow the lawn", de="Rasenmähen", it="Tagliare l'erba", nl="Grasmaaien"),
                  "gardening": dict(en="Gardening", de="Gärtnern", it="Giardinaggio", nl="Tuinieren"),
                  "golf": dict(en="Golf", de="Golf", it="Golf",
-                                   nl="Gol"),
+                                   nl="Golf"),
                  "gymnastics": dict(en="Gymnastics", de="Gymnastik", it="Ginnastica dolce", nl="Gymnastiek"),
                  "horse riding": dict(en="Horse riding", de="reiten", it="Equitazione",
-                                  nl="Rijden"),
+                                  nl="Paardrijden"),
                  "tennis": dict(en="Tennis", de="Tennis", it="Tennis", nl="Tennis"),
                  "hiking": dict(en="Hiking", de="Wandern", it="Escursionismo", nl="Hiken"),
                  "swimming": dict(en="Swimming", de="Schwimmen", it="Nuoto",
@@ -90,8 +90,8 @@ activity_name = {"cycling": dict(en="Cycling", de="Radfahren", it="Ciclismo", nl
                  "water aerobic": dict(en="Water aerobic", de="Wassergymnastik", it="Acqua gym", nl="Aquafitness"),
                  "archery": dict(en="Archery", de="Bogenschießen", it="Tiro con l'arco",
                                   nl="Boogschieten"),
-                 "tai chi": dict(en="Tai Chi", de="Tai Chi", it="Tai Chi",
-                                  nl="Tai Chi"),
+                 "tai chi": dict(en="Tai Chi", de="Tai Chi", it="Thai Chi",
+                                  nl="Thai Chi"),
                  "activity": dict(en="Physical Activity", de="Körperliche Aktivität",it="Attività Fisica",
                                                   nl="Beweegactiviteit")
                  }
@@ -215,9 +215,10 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "to stay active.",
                       de="Hallo{}. Wie ich sehe hast du noch keine Credits für diese Woche vergeben. Bitte "
                          "hole das nach um aktiv zu bleiben.",
-                      it="Ciao{}. Vedo che non hai aggiunto crediti per questa settimana. Cerca di continuare a "
-                         "farlo, per rimanere in attività.",
-                      nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
+                      it="Ciao{}. Continua la selezione delle attività che preferisci, fino a raggiungere tutti i " 
+                         "crediti del tuo programma settimanale.",
+                      nl="Hallo{}. Ik zie dat je deze week geen punten hebt toegewezen. Doe dit alsjeblieft om "
+                         "actief te blijven."),
                   "allocate_mets": dict(
                       en="Hello{}. I see you haven't allocated all credits for this week. Please do so in order "
                          "to meet your weekly goal and stay active.",
@@ -225,7 +226,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto tutti i crediti per questa settimana. Prova a completare "
                          "il tuo obiettivo settimanale per non perdere l'allenamento.",
-                      nl="Hallo{}. Ik zie dat je deze week geen credits hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
+                      nl="Hallo{}. Ik zie dat je deze week geen punten hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
                   "select_activity": dict(en="Please select a new physical activity for the upcoming week.",
                                           de="Bitte wähle eine neue Aktivität für die kommende Woche aus.",
                                           it="Seleziona un nuova attività fisica per la prossima settimana.",
@@ -317,7 +318,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "buona notizia è che ti restituirò i crediti! Assicurati di spenderli in nuove attività per " 
                          "raggiungere il tuo obiettivo settimanale.",
                       nl="Goed om je te zien {}! Ik zie dat je taken had ingepland die je de afgelopen dagen niet hebt " 
-                         "kunnen doen. Geen probleem, ik heb deze taken voor je verwijderd. Het goede nieuws is dat je" 
+                         "kunnen doen. Geen probleem, ik heb deze taken voor je verwijderd. Het goede nieuws is dat je " 
                          "punten terugkrijgt om te gebruiken voor nieuwe activiteiten! Zorg ervoor dat je ze uitgeeft " 
                          "om je wekelijkse doel te bereiken."),
                   "activity_info": dict(
@@ -339,8 +340,8 @@ dashboard_desc = {"first_week": dict(en="It seems you just started your physical
                                         "Im Laufe der Zeit wirst du mehr Details zu deinem Fortschritt hier finden.",
                                      it="Sembra che tu abbia appena iniziato il tuo programma di attività fisica "
                                         "settimanale. Man mano che progredisci, otterrai maggiori informazioni.",
-                                     nl="Het lijkt erop dat je deze week net aan je beweegplan bent begonnen. Je "
-                                        "krijgt hier meer inzichten naarmate je vordert."),
+                                     nl="Het lijkt erop dat je deze week net aan je beweegplan bent begonnen. "
+                                         "Naarmate de tijd vordert zie je hier meer informatie."),
                   "second_week": dict(en="Sticking to a goal the first two weeks is the hardest part to form a habit. "
                                          "You are about to overcome this hurdle.",
                                       de="In den ersten zwei Wochen an einem Ziel festzuhalten, ist der schwierigste "
