@@ -45,7 +45,7 @@ class CreateSchedulerJob:
         self.create_job()
 
     def create_job(self):
-        #self.date_for_scheduler = datetime.now() + timedelta(seconds=3)
+        #self.date_for_scheduler = datetime.now() + timedelta(seconds=10)
         scheduler.add_job(execute_scheduler_job_notification, trigger="date", run_date=self.date_for_scheduler,
                           args=self.arguments, kwargs=self.karguments, id=self.scheduler_id, replace_existing=True)
 

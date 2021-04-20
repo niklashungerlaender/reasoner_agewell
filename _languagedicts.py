@@ -115,7 +115,7 @@ italian_gender = {"first_week": dict(male="Benvenuto", female="Benvenuta"),
                   "activity_missed": dict(male="riuscito", female="riuscita")
                   }
 mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heute?", it="Come ti senti oggi?",
-                        nl="How do you feel today?"),
+                        nl="Hoe voel je je vandaag?"),
         "evening": dict(en="How was your day?", de="Wie war dein Tag?", it="Com'è andata la tua giornata?",
                         nl="How was your day?")
         }

@@ -53,10 +53,7 @@ with ruleset('firstgoal/intern'):
         try:
             check_goal_id = db.DbQuery(ss.query("get_goal_id_user", client_id=c.m.client_id), "query_one").create_thread()
             if check_goal_id is None:
-                notification_id = str(uuid.uuid1().int)
-                notification_id_2 = str(uuid.uuid1().int)
-                notification_id_3 = str(uuid.uuid1().int)
-                notification_id_4 = str(uuid.uuid1().int)
+                day = datetime.today().weekday()
                 run_time = datetime.now() + timedelta(days=6)
                 run_time = run_time.replace(hour=23, minute=59, second=59)
                 run_time_mot_messages = datetime.now() + timedelta(days=3)
@@ -65,16 +62,16 @@ with ruleset('firstgoal/intern'):
                 run_time_mood_morning = run_time_mood_daily.replace(hour=10, minute=00)
                 run_time_mood_evening = run_time_mood_daily.replace(hour=20, minute=00)
                 db.DbQuery(ss.query("insert_goal", client_id=c.m.client_id, run_time=run_time), "insert").create_thread()
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "goal",
                                             trigger="date", run_date=run_time,
                                             args=["goal", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_4 + c.m.client_id,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "motivation_text",
                                             trigger="date", run_date=run_time_mot_messages,
                                             args=["motivation/weekly", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2 + c.m.client_id,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "mood_morning",
                                             trigger="date", run_date=run_time_mood_morning,
                                             args=["mood/morning", c.m.client_id])
-                _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_3 + c.m.client_id,
+                _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "mood_evening",
                                             trigger="date", run_date=run_time_mood_evening,
                                             args=["mood/evening", c.m.client_id])
                 language_code = db.DbQuery(ss.query("get_language", client_id=c.m.client_id), "query_one").create_thread()
@@ -680,11 +677,6 @@ with ruleset('user/dashboard/request'):
                                                         language=c.m.language_code,
                                                         charts=charts)
             publish_message(c.m.client_id, topic, message_dict)
-            # notification_id_2 = str(uuid.uuid1().int)
-            """run_time_mood_daily = datetime.now() + timedelta(seconds=1)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_2,
-                                        trigger="date", run_date=run_time_mood_daily,
-                                        args=["mood/evening", c.m.client_id])"""
         except Exception as e:
             print(e)
 
@@ -718,7 +710,7 @@ with flowchart("goal"):
         @run
         def create_goal_notification(c):
             try:
-                notification_id = str(uuid.uuid1().int)
+                day = datetime.today().weekday()
                 sql_statement = (f"SELECT goal_id, met_required, end_date from goal where user_id = '{c.m.client_id}' "
                                  f"ORDER BY goal_id DESC LIMIT 1")
                 goal_vars = db.DbQuery(sql_statement, "query_all").create_thread()
@@ -727,7 +719,7 @@ with flowchart("goal"):
                 end_date = goal_vars[0][2]
                 run_time = end_date + timedelta(days=7)
                 run_time = run_time.replace(hour=23, minute=59, second=59)
-                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", id=notification_id + c.m.client_id,
+                _schedule.scheduler.add_job(execute_scheduler_job, trigger="date", id=c.m.client_id + "goal",
                                             run_date=run_time,
                                             args=["goal", c.m.client_id])
                 sql_statement = (f"SELECT a.duration, s.met_value from activity_type s INNER JOIN activity "
@@ -1613,8 +1605,8 @@ with ruleset('motivation/weekly'):
             run_time_mot_messages = datetime.today() + timedelta(days=4)
             run_time_mot_messages = datetime.combine(run_time_mot_messages, hf.get_reminder_time("morning",
                                                                                                  reminder_id_morning))
-            notification_id = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id + c.m.client_id,
+            day = datetime.today().weekday()
+            _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "motivation_text",
                                         trigger="date", run_date=run_time_mot_messages,
                                         args=["motivation/weekly", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
@@ -1659,8 +1651,9 @@ with ruleset('mood/morning'):
             run_time_morning = datetime.today() + timedelta(days=1)
             date_for_scheduler = datetime.combine(run_time_morning, hf.get_reminder_time("morning",
                                                                                          reminder_id_morning))
-            notification_id_morning = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_morning + c.m.client_id,
+            day = datetime.today().weekday()
+            notification_id = c.m.client_id + str(day) + "mood_morning"
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
                                         trigger="date", run_date=date_for_scheduler,
                                         args=["mood/morning", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
@@ -1713,8 +1706,9 @@ with ruleset('mood/evening'):
             run_time_evening = datetime.today() + timedelta(days=1)
             date_for_scheduler = datetime.combine(run_time_evening, hf.get_reminder_time("evening",
                                                                                          reminder_id_evening))
-            notification_id_evening = str(uuid.uuid1().int)
-            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id_evening + c.m.client_id,
+            day = datetime.today().weekday()
+            notification_id = c.m.client_id + str(day) + "mood_evening"
+            _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
                                         trigger="date", run_date=date_for_scheduler,
                                         args=["mood/evening", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
