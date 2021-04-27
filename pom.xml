@@ -11,7 +11,7 @@
 
 	<groupId>at.ac.ait.hbs.dhh</groupId>
 	<artifactId>reasoner</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>Reasoner</name>
 	<description></description>
@@ -61,7 +61,7 @@
 			<id>at.ac.ait.hbs.dhh</id>
 			<name>AIT - DHH Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh
+				https://nexus.arcsmed.at/repository/dhh
 			</url>
 			<uniqueVersion>false</uniqueVersion>
 		</repository>
@@ -69,7 +69,7 @@
 			<id>at.ac.ait.hbs.dhh.snapshots</id>
 			<name>AIT - DHH Snapshots Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+				https://nexus.arcsmed.at/repository/dhh-snapshots
 			</url>
 			<uniqueVersion>false</uniqueVersion>
 		</snapshotRepository>
@@ -261,7 +261,7 @@
 			<id>at.ac.ait.hbs.common</id>
 			<name>AIT - Common Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/common
+				https://nexus.arcsmed.at/repository/common
 			</url>
 			<releases>
 				<enabled>true</enabled>
@@ -274,7 +274,7 @@
 			<id>at.ac.ait.hbs.common.snapshots</id>
 			<name>AIT - Common Snapshots Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/common-snapshots
+				https://nexus.arcsmed.at/repository/common-snapshots
 			</url>
 			<releases>
 				<enabled>false</enabled>
@@ -287,7 +287,7 @@
 			<id>at.ac.ait.hbs.dhh</id>
 			<name>AIT - DHH Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh
+				https://nexus.arcsmed.at/repository/dhh
 			</url>
 			<releases>
 				<enabled>true</enabled>
@@ -300,7 +300,7 @@
 			<id>at.ac.ait.hbs.dhh.snapshots</id>
 			<name>AIT - DHH Snapshots Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+				https://nexus.arcsmed.at/repository/dhh-snapshots
 			</url>
 			<releases>
 				<enabled>false</enabled>
@@ -317,7 +317,7 @@
 			<id>at.ac.ait.hbs.common</id>
 			<name>AIT - Common Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/common
+				https://nexus.arcsmed.at/repository/common
 			</url>
 			<releases>
 				<enabled>true</enabled>
@@ -330,7 +330,7 @@
 			<id>at.ac.ait.hbs.common.snapshots</id>
 			<name>AIT - Common Snapshots Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/common-snapshots
+				https://nexus.arcsmed.at/repository/common-snapshots
 			</url>
 			<releases>
 				<enabled>false</enabled>
@@ -343,7 +343,7 @@
 			<id>at.ac.ait.hbs.dhh</id>
 			<name>AIT - DHH Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh
+				https://nexus.arcsmed.at/repository/dhh
 			</url>
 			<releases>
 				<enabled>true</enabled>
@@ -356,7 +356,7 @@
 			<id>at.ac.ait.hbs.dhh.snapshots</id>
 			<name>AIT - DHH Snapshots Repository</name>
 			<url>
-				https://nexus.arcsmed.at/content/repositories/dhh-snapshots
+				https://nexus.arcsmed.at/repository/dhh-snapshots
 			</url>
 			<releases>
 				<enabled>false</enabled>

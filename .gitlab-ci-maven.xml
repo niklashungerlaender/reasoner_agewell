@@ -49,25 +49,25 @@
 		<mirror>
 			<id>central-mirror</id>
 			<name>Central Mirror Repository</name>
-			<url>https://nexus.arcsmed.at/content/repositories/central</url>
+			<url>https://nexus.arcsmed.at/repository/central</url>
 			<mirrorOf>central</mirrorOf>
 		</mirror>
 		<mirror>
 			<id>apache-mirror</id>
 			<name>Apache Mirror Repository</name>
-			<url>https://nexus.arcsmed.at/content/repositories/apache</url>
+			<url>https://nexus.arcsmed.at/repository/apache</url>
 			<mirrorOf>apache</mirrorOf>
 		</mirror>
 		<mirror>
 			<id>apache-snapshots-mirror</id>
 			<name>Apache Snapshots Mirror Repository</name>
-			<url>https://nexus.arcsmed.at/content/repositories/apache-snapshots</url>
+			<url>https://nexus.arcsmed.at/repository/apache-snapshots</url>
 			<mirrorOf>apache-snapshots</mirrorOf>
 		</mirror>
 		<mirror>
 			<id>jcenter-mirror</id>
 			<name>JCenter Mirror Repository</name>
-			<url>https://nexus.arcsmed.at/content/repositories/jcenter</url>
+			<url>https://nexus.arcsmed.at/repository/jcenter</url>
 			<mirrorOf>jcenter</mirrorOf>
 		</mirror>
 	</mirrors>
