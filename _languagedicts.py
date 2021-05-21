@@ -226,7 +226,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "hole das nach um dein wöchentliches Ziel zu erreichen und aktiv zu bleiben.",
                       it="Ciao{}. Vedo che non hai aggiunto tutti i crediti per questa settimana. Prova a completare "
                          "il tuo obiettivo settimanale per non perdere l'allenamento.",
-                      nl="Hallo{}. Ik zie dat je deze week geen punten hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
+                      nl="Hallo{}. Ik zie dat je deze week niet alle punten hebt toegewezen. Doe dit alsjeblieft om actief te blijven."),
                   "select_activity": dict(en="Please select a new physical activity for the upcoming week.",
                                           de="Bitte wähle eine neue Aktivität für die kommende Woche aus.",
                                           it="Seleziona un nuova attività fisica per la prossima settimana.",
@@ -279,7 +279,7 @@ text_to_speech = {"activity_today": dict(en="You have scheduled this activity fo
                          "voldoende tijd voor hebt. Als je de activiteit al hebt uitgevoerd, kun je dit aangeven door " 
                          "op de knop 'Activiteit voltooid' op het activiteitenscherm te drukken."),
                   "on_track": dict(
-                      en="Hello there{}. Seems you have done all activities scheduled for today. Congratulations!"
+                      en="Hello there{}. Seems you have done all activities scheduled for today. Congratulations! "
                          "You can relax now with a good feeling and treat yourself to something nice.",
                       de="Hallo{}. Wie es scheint hast du alle für heute geplanten Aktivitäten durchgeführt. "
                          "Herzlichen Glückwunsch! Du kannst dich jetzt mit einem guten Gefühl entspannen und dir etwas "
