@@ -117,7 +117,7 @@ italian_gender = {"first_week": dict(male="Benvenuto", female="Benvenuta"),
 mood = {"morning": dict(en="How do you feel today?", de="Wie fühlst du dich heute?", it="Come ti senti oggi?",
                         nl="Hoe voel je je vandaag?"),
         "evening": dict(en="How was your day?", de="Wie war dein Tag?", it="Com'è andata la tua giornata?",
-                        nl="How was your day?")
+                        nl="Hoe was je dag?")
         }
 link_text = dict(en="", de="", it="[clicca qui])", nl="[klik hier]")
 youtube_text = dict(en="", de="", it=" Video a fondo pagina.", nl=" Kjk de onderstaande video voor instructies.")

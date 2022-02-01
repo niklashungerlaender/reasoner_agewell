@@ -3,6 +3,7 @@ import json
 import re
 import _helperfunctions as hf
 from configparser import ConfigParser
+import ssl
 
 
 def on_connect(client, userdata, flags, rc):
@@ -52,7 +53,8 @@ def parse_topic(message):
 
 def connect_to_mqtt(username, password, host, port):
     client_conn = mqtt.Client()
-    client_conn.tls_set_context(context=None)
+    client_conn.tls_set(cert_reqs=ssl.CERT_NONE)
+    #client_conn.tls_set_context(context=None)
     client_conn.username_pw_set(username=username, password=password)
     client_conn.on_connect = on_connect
     client_conn.on_message = on_message

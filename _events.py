@@ -595,6 +595,21 @@ with ruleset('user/activities/request'):
                                                             text_to_speech_main=text_to_speech_main,
                                                             title_display_sub=title_display_sub)
 
+            """run_time_mot_messages = datetime.now() + timedelta(seconds=3)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(day) + "motivation_text",
+                                        trigger="date", run_date=run_time_mot_messages,
+                                        args=["motivation/weekly", c.m.client_id])
+            """
+            run_time_mood_morning = datetime.now() + timedelta(seconds=3)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(4) + "mood_morning",
+                                        trigger="date", run_date=run_time_mood_morning,
+                                        args=["mood/morning", c.m.client_id])
+            """
+            run_time_mood_evening = datetime.now() + timedelta(seconds=2)
+            _schedule.scheduler.add_job(execute_scheduler_job, id=c.m.client_id + str(randint(1,1000)) + "mood_evening",
+                                        trigger="date", run_date=run_time_mood_evening,
+                                        args=["mood/evening", c.m.client_id])"""
+
             publish_message(c.m.client_id, topic, message_dict)
         except Exception as e:
             print(e)
@@ -1652,9 +1667,9 @@ with ruleset('mood/morning'):
             date_for_scheduler = datetime.combine(run_time_morning, hf.get_reminder_time("morning",
                                                                                          reminder_id_morning))
             day = datetime.today().weekday()
-            notification_id = c.m.client_id + str(day) + "mood_morning"
+            notification_id = c.m.client_id + "mood_morning"
             _schedule.scheduler.add_job(execute_scheduler_job, id=notification_id,
-                                        trigger="date", run_date=date_for_scheduler,
+                                        trigger="date", run_date=date_for_scheduler, replace_existing=True,
                                         args=["mood/morning", c.m.client_id])
             topic = "eu/agewell/event/reasoner/notification/message"
             content = ld.mood["morning"][c.m.language_code]

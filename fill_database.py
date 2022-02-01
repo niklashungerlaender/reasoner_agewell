@@ -108,6 +108,7 @@ def create_tables(connection, cursor):
                 end_date TIMESTAMP NOT NULL,
                 met_required SMALLINT,
                 achieved SMALLINT
+                UNIQUE (user_id, start_date)
         )
         """,
         """
@@ -200,7 +201,7 @@ def insert_templates(connection, cursor):
 def main():
     connection, cursor = connect_to_db()
     # create_tables(connection,cursor)
-    insert_activities(connection, cursor)
+    #insert_activities(connection, cursor)
     insert_templates(connection, cursor)
     cursor.close()
     connection.close()
